@@ -45,7 +45,8 @@ coderMCP.tool(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-RapidAPI-Key': process.env.JUDGE0_API_KEY || ''
+          'X-RapidAPI-Key': process.env.JUDGE0_API_KEY || '',
+          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
         },
         body: JSON.stringify({
           source_code: code,

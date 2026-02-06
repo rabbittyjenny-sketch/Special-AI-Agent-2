@@ -1,9 +1,16 @@
 
+export interface Message {
+    role: string;
+    content: string;
+    timestamp: string;
+    metadata?: Record<string, any>;
+}
+
 export interface ConversationState {
     conversationId: string;
     userId: string;
     agentType: 'design' | 'analyst' | 'coder' | 'marketing';
-    messages: Array<{ role: string; content: string; timestamp: string }>;
+    messages: Message[];
     context: {
         currentTask?: string;
         preferences?: Record<string, any>; // จำ preferences จาก memory

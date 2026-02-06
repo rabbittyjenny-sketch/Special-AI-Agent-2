@@ -1,19 +1,9 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "api/chat.ts",
-            "use": "@vercel/node"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/api/chat",
-            "dest": "api/chat.ts"
-        }
-    ],
+    "framework": "nextjs",
     "env": {
         "ANTHROPIC_API_KEY": "@anthropic_api_key",
-        "DATABASE_URL": "@database_url"
+        "DATABASE_URL": "@database_url",
+        "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
+        "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token"
     }
 }

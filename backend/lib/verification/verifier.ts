@@ -181,7 +181,7 @@ async function checkRule(response: string, rule: string): Promise<{ passed: bool
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
     const check = await anthropic.messages.create({
-        model: "claude-3-haiku-20240307", // Corrected model
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 50,
         messages: [{
             role: "user",
