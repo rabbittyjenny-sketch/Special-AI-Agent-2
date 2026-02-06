@@ -4,8 +4,7 @@ import { neon } from '@neondatabase/serverless';
 import { migrate } from 'drizzle-orm/neon-http/migrator';
 import * as dotenv from 'dotenv';
 
-// Load .env.local because that's where your keys are
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' });
 
 async function runMigrations() {
     if (!process.env.DATABASE_URL) {

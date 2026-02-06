@@ -10,7 +10,7 @@
         "db:generate": "drizzle-kit generate",
         "db:migrate": "npx tsx drizzle/migrate.ts",
         "db:push": "drizzle-kit push",
-        "db:seed": "psql  -f migrations/seed_data.sql"
+        "db:seed": "npx tsx drizzle/seed.ts"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.36.3",
