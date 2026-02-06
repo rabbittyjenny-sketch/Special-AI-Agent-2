@@ -61,7 +61,9 @@ designMCP.tool(
     let result = { url: "mock_url", fileId: "mock_file_id" };
 
     if (process.env.FIGMA_TOKEN) {
-      const figmaResponse = await fetch('https://api.figma.com/v1/files/create', { // Example endpoint
+      // Figma API: GET files, POST comments - no direct "create" endpoint
+      // This uses the files endpoint to duplicate from a template
+      const figmaResponse = await fetch(`https://api.figma.com/v1/files/${template}/duplicate`, {
         method: 'POST',
         headers: {
           'X-Figma-Token': process.env.FIGMA_TOKEN!,

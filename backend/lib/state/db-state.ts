@@ -17,7 +17,7 @@ export async function syncStateToDatabase(conversationId: string) {
     await db.insert(conversations).values({
         id: hotState.conversationId,
         userId: hotState.userId,
-        agentType: hotState.agentType as any,
+        agentType: hotState.agentType as 'design' | 'analyst' | 'coder' | 'marketing',
         status: 'active',
         metadata: hotState.metadata,
         updatedAt: new Date()
@@ -35,7 +35,7 @@ export async function syncStateToDatabase(conversationId: string) {
     for (const msg of hotState.messages) {
         await db.insert(messages).values({
             conversationId: hotState.conversationId,
-            role: msg.role as any,
+            role: msg.role as 'user' | 'assistant' | 'system' | 'tool',
             content: msg.content,
             metadata: msg.metadata || {},
             createdAt: new Date(msg.timestamp)
