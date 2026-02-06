@@ -1,224 +1,155 @@
-"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import {
-    Send,
-    Bot,
-    User,
-    BarChart3,
-    LayoutDashboard,
-    Settings,
-    MessageSquare,
-    Sparkles,
-    ChevronRight,
-    Database,
-    Search
-} from 'lucide-react';
+'use client';
 
-// --- UI Components with Embedded Styles (Fixing the "Dead UI" issue) ---
+import { useState, useEffect } from 'react';
 
-const Card = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-    <div className={`p-8 rounded-[28px] border border-white/60 bg-[#EFF2F9] shadow-[15px_15px_30px_#d1d9e6,-15px_-15px_30px_#ffffff] ${className}`}>
-        {children}
-    </div>
-);
+/**
+ * iDEAS365 Agent Test Interface
+ * เน้นความสะอาดตาและการแสดงสถานะ Verification ชัดเจน
+ */
+export default function Home() {
+  const [conversationId, setConversationId] = useState('');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
 
-const MessageBubble = ({ role, content, agentType }: { role: string, content: string, agentType?: string }) => (
-    <div style={{ display: 'flex', width: '100%', marginBottom: '2rem', justifyContent: role === 'user' ? 'flex-end' : 'flex-start' }}>
-        <div style={{ display: 'flex', maxWidth: '80%', gap: '1rem', flexDirection: role === 'user' ? 'row-reverse' : 'row' }}>
-            <div className="neo-button" style={{ width: '48px', height: '48px', flexShrink: 0, color: role === 'assistant' ? '#3b82f6' : '#64748b' }}>
-                {role === 'assistant' ? <Bot size={24} /> : <User size={24} />}
+  // 🔥 Fix Hydration: สร้าง ID เฉพาะฝั่ง Client เท่านั้น
+  useEffect(() => {
+    setConversationId(crypto.randomUUID());
+  }, []);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = input;
+    setInput('');
+    setLoading(true);
+
+    // Add user message to UI
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId,
+          userId: 'test-user-123',
+          agentType: 'coder',
+          message: userMessage
+        })
+      });
+
+      const result = await res.json();
+
+      // Add assistant message to UI
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: result.data.message,
+        metadata: {
+          confidence: result.data.confidence,
+          verified: result.data.verified,
+          needsReview: result.data.needsReview,
+          warnings: result.data.warnings
+        }
+      }]);
+
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Error: Cannot connect to the brain.',
+        metadata: { confidence: 0, verified: false, needsReview: true }
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-4 font-sans text-slate-800">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-sky-400 bg-clip-text text-transparent">
+          iDEAS365 Agent Test
+        </h1>
+        <div className="text-xs text-slate-400">ID: {conversationId.split('-')[0]}</div>
+      </div>
+
+      <div className="border border-slate-200 bg-white shadow-sm rounded-xl p-6 h-[500px] overflow-y-auto mb-6 flex flex-col gap-4">
+        {messages.length === 0 && (
+          <div className="text-center text-slate-400 mt-20 italic">
+            เริ่มการสนทนาเพื่อทดสอบระบบความจำและสมองกล...
+          </div>
+        )}
+
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+            <div className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${msg.role === 'user'
+              ? 'bg-blue-600 text-white rounded-tr-none'
+              : 'bg-slate-100 text-slate-700 rounded-tl-none border border-slate-200'
+              }`}>
+              <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
             </div>
-            <div style={{
-                padding: '1.5rem',
-                borderRadius: '24px',
-                backgroundColor: role === 'user' ? '#334155' : '#EFF2F9',
-                color: role === 'user' ? 'white' : '#475569',
-                boxShadow: role === 'user' ? '0 10px 15px -3px rgba(0,0,0,0.1)' : '15px 15px 30px #d1d9e6, -15px -15px 30px #ffffff'
-            }}>
-                {agentType && role === 'assistant' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', opacity: 0.6 }}>
-                        <Sparkles size={12} />
-                        <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{agentType} Agent</span>
-                    </div>
+
+            {msg.metadata && (
+              <div className="flex gap-2 items-center mt-2 px-1">
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${msg.metadata.confidence > 80 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                  }`}>
+                  Confidence: {msg.metadata.confidence}%
+                </span>
+
+                {msg.metadata.verified && (
+                  <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">
+                    ✓ Verified
+                  </span>
                 )}
-                <p style={{ fontSize: '16px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{content}</p>
-            </div>
+
+                {msg.metadata.needsReview && (
+                  <span className="text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full font-medium animate-pulse">
+                    ⚠️ Needs Review
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+        {loading && (
+          <div className="flex gap-2 items-center text-slate-400 text-xs animate-pulse">
+            <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce delay-75"></div>
+            <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce delay-150"></div>
+            <span>Agent is thinking...</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+          placeholder="พิมพ์ข้อความสั่งงานที่นี่..."
+          className="flex-1 px-4 py-2 outline-none text-sm"
+          disabled={loading}
+        />
+        <button
+          onClick={sendMessage}
+          disabled={loading || !input.trim()}
+          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl disabled:opacity-30 disabled:hover:bg-blue-600 transition-colors shadow-sm"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+
+      <div className="mt-8 grid grid-cols-2 gap-4">
+        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-[11px] text-blue-700">
+          <strong>Smart Lazy Logic:</strong> AI บันทึกความชอบของคุณลงใน <code className="bg-white px-1 rounded">MEMORY.md</code> อัตโนมัติทุกครั้งที่ได้รับ Feedback
         </div>
+        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-600">
+          <strong>Self-Verification:</strong> ทุกคำตอบผ่านการตรวจสอบกับกฎ <code className="bg-white px-1 rounded">CHECKLIST.md</code> ก่อนส่งถึงมือคุณ
+        </div>
+      </div>
     </div>
-);
-
-// --- MAIN APP ---
-
-export default function ChatPage() {
-    const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<any[]>([]);
-    const [isTyping, setIsTyping] = useState(false);
-    const [activeAgent, setActiveAgent] = useState('analyst');
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
-    const handleSend = async () => {
-        if (!input.trim()) return;
-
-        const userMsg = { role: 'user', content: input };
-        setMessages(prev => [...prev, userMsg]);
-        setInput('');
-        setIsTyping(true);
-
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: input,
-                    conversationId: 'default-uuid-session'
-                }),
-            });
-
-            const data = await response.json();
-            if (data.message) {
-                setMessages(prev => [...prev, {
-                    role: 'assistant',
-                    content: data.message,
-                    agentType: data.agentType || 'system'
-                }]);
-            }
-        } catch (error) {
-            console.error('Chat error:', error);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    return (
-        <div style={{ display: 'flex', height: '100vh', backgroundColor: '#EFF2F9', color: '#475569' }}>
-
-            {/* SIDEBAR */}
-            <aside style={{ width: '320px', padding: '2rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.4)' }}>
-                <header style={{ marginBottom: '3rem' }}>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', letterSpacing: '0.1em', color: '#334155', textTransform: 'uppercase' }}>AI AGENTS</h1>
-                    <p style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 'bold', letterSpacing: '0.4em', textTransform: 'uppercase' }}>Specialized Orchestrator</p>
-                </header>
-
-                <nav style={{ flex: 1 }}>
-                    <SidebarItem icon={LayoutDashboard} label="Dashboard" />
-                    <SidebarItem icon={MessageSquare} label="All Chats" active={true} />
-                    <div style={{ margin: '2.5rem 0', height: '1px', backgroundColor: 'rgba(51,65,85,0.1)' }}></div>
-                    <p style={{ padding: '0 1.5rem', marginBottom: '1.5rem', fontSize: '10px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em' }}>Specialized Agents</p>
-                    <SidebarItem icon={BarChart3} label="Analyst Agent" active={activeAgent === 'analyst'} onClick={() => setActiveAgent('analyst')} />
-                    <SidebarItem icon={Database} label="System Core" />
-                </nav>
-            </aside>
-
-            {/* CHAT AREA */}
-            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
-                <header style={{ height: '6rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 3rem', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div className="neo-button" style={{ width: '40px', height: '40px', color: '#3b82f6' }}><Bot size={20} /></div>
-                        <div>
-                            <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#334155', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Active Orchestrator</h2>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%' }}></span>
-                                <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase' }}>System Online</span>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                <section style={{ flex: 1, overflowY: 'auto', padding: '3rem' }}>
-                    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                        {messages.length === 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', padding: '5rem 0', opacity: 0.4 }}>
-                                <div className="neo-button" style={{ width: '64px', height: '64px', color: '#cbd5e1', marginBottom: '1.5rem' }}><Sparkles size={32} /></div>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8' }}>Start a strategic conversation</h3>
-                                <p style={{ maxWidth: '400px', fontSize: '14px', marginTop: '0.5rem' }}>ระบบ Specialized AI พร้อมทำงานร่วมกับคุณเพื่อวิเคราะห์ข้อมูลและสร้างกลยุทธ์ตามแนวทางที่ต้องการ</p>
-                            </div>
-                        )}
-
-                        {messages.map((msg, idx) => (
-                            <MessageBubble key={idx} {...msg} />
-                        ))}
-
-                        {isTyping && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#94a3b8', marginLeft: '4rem' }}>
-                                <span style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Agent is processing...</span>
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                    </div>
-                </section>
-
-                <footer style={{ padding: '3rem' }}>
-                    <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative' }}>
-                        <div className="neo-card" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                            <input
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder="Type your strategic query here..."
-                                style={{ flex: 1, backgroundColor: 'transparent', padding: '1rem 1.5rem', fontSize: '16px', fontWeight: 500, border: 'none', outline: 'none' }}
-                            />
-                            <button
-                                onClick={handleSend}
-                                disabled={!input.trim()}
-                                style={{
-                                    width: '56px', height: '56px', borderRadius: '22px', border: 'none',
-                                    backgroundColor: input.trim() ? '#334155' : '#EFF2F9',
-                                    color: input.trim() ? 'white' : '#cbd5e1',
-                                    boxShadow: input.trim() ? '0 10px 15px -3px rgba(0,0,0,0.1)' : '5px 5px 10px #d1d9e6, -5px -5px 10px #ffffff',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <Send size={24} />
-                            </button>
-                        </div>
-                        <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '10px', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.4em' }}>
-                            iDEAS365 x STRATEGIC AI ORCHESTRATOR
-                        </p>
-                    </div>
-                </footer>
-            </main>
-
-            <style jsx global>{`
-        .neo-button {
-          background-color: #EFF2F9;
-          border-radius: 22px;
-          box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #ffffff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: none;
-        }
-        .neo-card {
-           background-color: #EFF2F9;
-           box-shadow: 15px 15px 30px #d1d9e6, -15px -15px 30px #ffffff;
-           border: 1px solid rgba(255,255,255,0.6);
-           border-radius: 28px;
-        }
-      `}</style>
-        </div>
-    );
+  );
 }
-
-const SidebarItem = ({ icon: Icon, label, active = false, onClick }: any) => (
-    <button
-        onClick={onClick}
-        style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.5rem', borderRadius: '20px',
-            backgroundColor: active ? '#f1f5f9' : 'transparent',
-            boxShadow: active ? 'inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #ffffff' : 'none',
-            border: 'none', color: active ? '#334155' : '#94a3b8', cursor: 'pointer', marginBottom: '1rem'
-        }}
-    >
-        <Icon size={20} style={{ color: active ? '#3b82f6' : 'inherit' }} />
-        <span style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{label}</span>
-    </button>
-);
