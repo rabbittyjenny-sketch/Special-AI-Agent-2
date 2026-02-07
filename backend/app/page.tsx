@@ -18,6 +18,11 @@ export default function Home() {
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Voice output (TTS) state
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const [ttsLoading, setTtsLoading] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     setConversationId(crypto.randomUUID());
   }, []);
@@ -144,6 +149,58 @@ export default function Home() {
     }
   }, []);
 
+  // --- Voice Output (TTS) Function ---
+  const playTTS = useCallback(async (text: string, messageIndex: number) => {
+    // If already playing this message, stop it
+    if (playingIndex === messageIndex) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      setPlayingIndex(null);
+      return;
+    }
+
+    // Stop any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setPlayingIndex(null);
+    }
+
+    setTtsLoading(messageIndex);
+
+    try {
+      const res = await fetch('/api/voice/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('TTS failed:', err.error || res.status);
+        return;
+      }
+
+      const audioBlob = await res.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      audio.onended = () => {
+        setPlayingIndex(null);
+        audioRef.current = null;
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audioRef.current = audio;
+      setPlayingIndex(messageIndex);
+      await audio.play();
+    } catch (err) {
+      console.error('TTS error:', err);
+    } finally {
+      setTtsLoading(null);
+    }
+  }, [playingIndex]);
+
   const agentOptions = [
     { value: 'coder', label: 'Coder', color: 'bg-emerald-500' },
     { value: 'design', label: 'Design', color: 'bg-purple-500' },
@@ -198,8 +255,46 @@ export default function Home() {
               <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
             </div>
 
+            {/* TTS Play Button for AI messages */}
+            {msg.role === 'assistant' && msg.content && (
+              <div className="flex items-center gap-1 mt-1 px-1">
+                <button
+                  onClick={() => playTTS(msg.content, i)}
+                  disabled={ttsLoading === i}
+                  title={playingIndex === i ? 'Stop playing' : 'Listen to response'}
+                  className={`p-1.5 rounded-lg transition-all ${
+                    playingIndex === i
+                      ? 'bg-blue-500 text-white'
+                      : ttsLoading === i
+                        ? 'bg-amber-100 text-amber-600'
+                        : 'bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                  }`}
+                >
+                  {ttsLoading === i ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                    </svg>
+                  ) : playingIndex === i ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                      <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+                      <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    </svg>
+                  )}
+                </button>
+                <span className="text-[10px] text-slate-400">
+                  {ttsLoading === i ? 'Loading audio...' : playingIndex === i ? 'Playing...' : ''}
+                </span>
+              </div>
+            )}
+
             {msg.metadata && (
-              <div className="flex gap-2 items-center mt-2 px-1">
+              <div className="flex gap-2 items-center mt-1 px-1">
                 <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${msg.metadata.confidence > 80 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
                   }`}>
                   Confidence: {msg.metadata.confidence}%
@@ -316,7 +411,7 @@ export default function Home() {
             ? <span className="text-red-500 font-medium">Recording... release to transcribe</span>
             : isTranscribing
               ? <span className="text-amber-500 font-medium">Transcribing with ElevenLabs...</span>
-              : <span>Voice mode ON - hold the record button and speak (Thai/English)</span>
+              : <span>Voice mode ON - hold to speak | click speaker icon to hear AI response</span>
           }
         </div>
       )}
