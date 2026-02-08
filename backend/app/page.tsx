@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -27,18 +26,16 @@ export default function Home() {
     setConversationId(crypto.randomUUID());
   }, []);
 
-  // Auto-scroll to bottom when new messages appear
+  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-
     const userMessage = input;
     setInput('');
     setLoading(true);
-
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
@@ -54,148 +51,86 @@ export default function Home() {
       });
 
       const result = await res.json();
-
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: result.data?.message || result.error || 'No response',
         metadata: result.data ? {
           confidence: result.data.confidence,
           verified: result.data.verified,
-          needsReview: result.data.needsReview,
           warnings: result.data.warnings
         } : undefined
       }]);
-
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Error: Cannot connect to the brain.',
-        metadata: { confidence: 0, verified: false, needsReview: true }
+        metadata: { confidence: 0, verified: false }
       }]);
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Voice Input Functions ---
-
   const startRecording = useCallback(async () => {
-    if (!voiceEnabled) return;
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-          ? 'audio/webm;codecs=opus'
-          : 'audio/webm'
-      });
-
+      const mediaRecorder = new MediaRecorder(stream);
       audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
+      mediaRecorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
       mediaRecorder.onstop = async () => {
-        // Stop all tracks to release microphone
-        stream.getTracks().forEach(track => track.stop());
-
+        stream.getTracks().forEach(t => t.stop());
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-
-        if (audioBlob.size < 100) return; // Too short, ignore
-
+        if (audioBlob.size < 100) return;
         setIsTranscribing(true);
-
         try {
           const formData = new FormData();
           formData.append('audio', audioBlob, 'recording.webm');
-
-          const res = await fetch('/api/voice/transcribe', {
-            method: 'POST',
-            body: formData,
-          });
-
+          const res = await fetch('/api/voice/transcribe', { method: 'POST', body: formData });
           if (res.ok) {
             const result = await res.json();
-            if (result.text?.trim()) {
-              setInput(prev => prev ? `${prev} ${result.text}` : result.text);
-            }
-          } else {
-            console.error('Transcription failed:', res.status);
+            if (result.text?.trim()) setInput(prev => prev ? `${prev} ${result.text}` : result.text);
           }
-        } catch (err) {
-          console.error('Transcription error:', err);
         } finally {
           setIsTranscribing(false);
         }
       };
-
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(250); // Collect data every 250ms
+      mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      console.error('Microphone access denied:', err);
+      console.error('Mic access denied:', err);
       setVoiceEnabled(false);
     }
-  }, [voiceEnabled]);
+  }, []);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
+    if (mediaRecorderRef.current?.state !== 'inactive') {
+      mediaRecorderRef.current?.stop();
       setIsRecording(false);
     }
   }, []);
 
-  // --- Voice Output (TTS) Function ---
-  const playTTS = useCallback(async (text: string, messageIndex: number) => {
-    // If already playing this message, stop it
-    if (playingIndex === messageIndex) {
+  const playTTS = useCallback(async (text: string, index: number) => {
+    if (playingIndex === index) {
       audioRef.current?.pause();
-      audioRef.current = null;
       setPlayingIndex(null);
       return;
     }
-
-    // Stop any currently playing audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-      setPlayingIndex(null);
-    }
-
-    setTtsLoading(messageIndex);
-
+    setTtsLoading(index);
     try {
       const res = await fetch('/api/voice/speak', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error('TTS failed:', err.error || res.status);
-        return;
-      }
-
       const audioBlob = await res.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
-
-      audio.onended = () => {
-        setPlayingIndex(null);
-        audioRef.current = null;
-        URL.revokeObjectURL(audioUrl);
-      };
-
+      audio.onended = () => { setPlayingIndex(null); URL.revokeObjectURL(audioUrl); };
       audioRef.current = audio;
-      setPlayingIndex(messageIndex);
+      setPlayingIndex(index);
       await audio.play();
-    } catch (err) {
-      console.error('TTS error:', err);
     } finally {
       setTtsLoading(null);
     }
@@ -209,216 +144,75 @@ export default function Home() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto p-4 font-sans text-slate-800">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-sky-400 bg-clip-text text-transparent">
-          iDEAS365 Agent
-        </h1>
-        <div className="text-xs text-slate-400">ID: {conversationId.split('-')[0]}</div>
-      </div>
+    <div className="min-h-screen py-8 px-4 flex flex-col items-center selection:bg-blue-500/30">
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] -z-10 animate-pulse"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px] -z-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
 
-      {/* Agent Selector */}
-      <div className="flex gap-2 mb-4">
-        {agentOptions.map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setAgentType(opt.value)}
-            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${agentType === opt.value
-                ? `${opt.color} text-white shadow-sm`
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Messages Area */}
-      <div className="border border-slate-200 bg-white shadow-sm rounded-xl p-6 h-[500px] overflow-y-auto mb-4 flex flex-col gap-4">
-        {messages.length === 0 && (
-          <div className="text-center text-slate-400 mt-20 italic">
-            {voiceEnabled
-              ? 'Voice mode ON - กดปุ่มไมค์ค้างไว้แล้วพูด หรือพิมพ์ก็ได้...'
-              : 'เริ่มการสนทนาเพื่อทดสอบระบบความจำและสมองกล...'
-            }
+      <div className="w-full max-w-3xl glass-container shadow-2xl p-6 md:p-8 flex flex-col gap-6 animate-fade-in relative overflow-hidden">
+        <div className="flex justify-between items-center relative z-10">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-sky-300 to-purple-400 bg-clip-text text-transparent leading-tight">iDEAS365 Agent</h1>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-medium">Smart Specialist Agent System</p>
           </div>
-        )}
+          <div className="text-[10px] font-mono text-slate-400 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 shadow-inner">ID: {conversationId.split('-')[0]}</div>
+        </div>
 
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-            <div className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${msg.role === 'user'
-              ? 'bg-blue-600 text-white rounded-tr-none'
-              : 'bg-slate-100 text-slate-700 rounded-tl-none border border-slate-200'
-              }`}>
-              <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
-            </div>
-
-            {/* TTS Play Button for AI messages */}
-            {msg.role === 'assistant' && msg.content && (
-              <div className="flex items-center gap-1 mt-1 px-1">
-                <button
-                  onClick={() => playTTS(msg.content, i)}
-                  disabled={ttsLoading === i}
-                  title={playingIndex === i ? 'Stop playing' : 'Listen to response'}
-                  className={`p-1.5 rounded-lg transition-all ${playingIndex === i
-                      ? 'bg-blue-500 text-white'
-                      : ttsLoading === i
-                        ? 'bg-amber-100 text-amber-600'
-                        : 'bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
-                    }`}
-                >
-                  {ttsLoading === i ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-                    </svg>
-                  ) : playingIndex === i ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                      <rect x="6" y="4" width="4" height="16" rx="1"></rect>
-                      <rect x="14" y="4" width="4" height="16" rx="1"></rect>
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                    </svg>
-                  )}
-                </button>
-                <span className="text-[10px] text-slate-400">
-                  {ttsLoading === i ? 'Loading audio...' : playingIndex === i ? 'Playing...' : ''}
-                </span>
-              </div>
-            )}
-
-            {msg.metadata && (
-              <div className="flex gap-2 items-center mt-1 px-1">
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${msg.metadata.confidence > 80 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                  }`}>
-                  Confidence: {msg.metadata.confidence}%
-                </span>
-
-                {msg.metadata.verified && (
-                  <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">
-                    Verified
-                  </span>
-                )}
-
-                {msg.metadata.needsReview && (
-                  <span className="text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full font-medium animate-pulse">
-                    Needs Review
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-
-        {loading && (
-          <div className="flex gap-2 items-center text-slate-400 text-xs animate-pulse">
-            <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '75ms' }}></div>
-            <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <span>Agent is thinking...</span>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Area */}
-      <div className="flex gap-2 items-center">
-        {/* Voice Toggle */}
-        <button
-          onClick={() => setVoiceEnabled(prev => !prev)}
-          title={voiceEnabled ? 'Turn off voice input' : 'Turn on voice input'}
-          className={`p-2.5 rounded-xl transition-all shrink-0 ${voiceEnabled
-              ? 'bg-red-500 text-white shadow-sm hover:bg-red-600'
-              : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
-            }`}
-        >
-          {/* Mic icon */}
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" x2="12" y1="19" y2="22"></line>
-          </svg>
-        </button>
-
-        {/* Main Input */}
-        <div className="flex-1 flex gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !loading && sendMessage()}
-            placeholder={isTranscribing ? 'Transcribing...' : isRecording ? 'Recording... release to stop' : 'พิมพ์หรือพูดสั่งงานที่นี่...'}
-            className="flex-1 px-4 py-2 outline-none text-sm"
-            disabled={loading}
-          />
-
-          {/* Voice Record Button (only when voice enabled) */}
-          {voiceEnabled && (
-            <button
-              onClick={() => isRecording ? stopRecording() : startRecording()}
-              disabled={loading || isTranscribing}
-              title={isRecording ? "Click to stop" : "Click to record"}
-              className={`p-2 rounded-xl transition-all ${isRecording
-                  ? 'bg-red-500 text-white animate-pulse'
-                  : isTranscribing
-                    ? 'bg-amber-400 text-white'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                } disabled:opacity-30`}
-            >
-              {isTranscribing ? (
-                /* Loading spinner */
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-                </svg>
-              ) : isRecording ? (
-                /* Stop icon */
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="6" y="6" width="12" height="12"></rect>
-                </svg>
-              ) : (
-                /* Record circle */
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                </svg>
-              )}
+        <div className="flex flex-wrap gap-2 relative z-10">
+          {agentOptions.map(opt => (
+            <button key={opt.value} onClick={() => setAgentType(opt.value)} className={`text-[11px] px-4 py-2 rounded-xl font-medium transition-all duration-300 border ${agentType === opt.value ? 'bg-white/10 border-white/25 text-white shadow-[0_0_20px_rgba(255,255,255,0.05)] scale-105' : 'bg-transparent border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/15'}`}>
+              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-2 ${opt.color.replace('bg-', 'bg-opacity-80 bg-')}`}></span>
+              {opt.label}
             </button>
+          ))}
+        </div>
+
+        <div className="flex-1 bg-black/20 rounded-2xl p-4 md:p-6 h-[500px] overflow-y-auto mb-2 flex flex-col gap-6 border border-white/5 relative z-10 scroll-smooth">
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 italic gap-4 opacity-50">
+              <div className="w-14 h-14 rounded-2xl border border-dashed border-slate-700 flex items-center justify-center bg-white/5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              </div>
+              <p className="text-xs">เริ่มการสนทนาเพื่อทดสอบระบบความจำและสมองกล...</p>
+            </div>
           )}
 
-          {/* Send Button */}
-          <button
-            onClick={sendMessage}
-            disabled={loading || !input.trim()}
-            className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl disabled:opacity-30 disabled:hover:bg-blue-600 transition-colors shadow-sm"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-fade-in`}>
+              <div className={`max-w-[88%] p-4 rounded-2xl transition-all ${msg.role === 'user' ? 'bg-blue-600/90 text-white rounded-tr-none shadow-xl glow-blue' : 'bg-white/5 text-slate-200 rounded-tl-none border border-white/10'}`}>
+                <div className="whitespace-pre-wrap text-[13px] leading-relaxed">{msg.content}</div>
+              </div>
+              {msg.role === 'assistant' && (
+                <div className="flex items-center gap-3 mt-2 px-1">
+                  <button onClick={() => playTTS(msg.content, i)} className="p-1.5 rounded-lg bg-white/5 text-slate-400 hover:bg-white/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                  </button>
+                  {msg.metadata && <span className="text-[8px] uppercase tracking-widest font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">{msg.metadata.confidence}% Confidence</span>}
+                </div>
+              )}
+            </div>
+          ))}
+          {loading && <div className="text-slate-600 text-[11px] animate-pulse uppercase tracking-widest">Agent is thinking...</div>}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="flex gap-3 items-center relative z-10">
+          <button onClick={() => setVoiceEnabled(!voiceEnabled)} className={`p-3.5 rounded-2xl border ${voiceEnabled ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>
           </button>
+          <div className="flex-1 flex gap-2 bg-white/5 p-2 rounded-2xl border border-white/10 focus-within:ring-1 focus-within:ring-blue-500/20">
+            <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} placeholder={isRecording ? 'Listening...' : 'พิมพ์หรือพูดสั่งงานที่นี่...'} className="flex-1 bg-transparent px-4 py-2 outline-none text-white text-sm placeholder:text-slate-700" />
+            {voiceEnabled && (
+              <button onClick={() => isRecording ? stopRecording() : startRecording()} className={`p-2.5 rounded-xl ${isRecording ? 'bg-red-500' : 'bg-white/10'} text-white`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><rect x="9" y="9" width="6" height="6" fill="white" className={isRecording ? 'block' : 'hidden'}></rect></svg>
+              </button>
+            )}
+            <button onClick={sendMessage} className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl shadow-lg shadow-blue-600/20"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+          </div>
         </div>
-      </div>
 
-      {/* Voice Status Bar */}
-      {voiceEnabled && (
-        <div className="mt-2 text-center text-[11px] text-slate-400">
-          {isRecording
-            ? <span className="text-red-500 font-medium">Recording... release to transcribe</span>
-            : isTranscribing
-              ? <span className="text-amber-500 font-medium">Transcribing with ElevenLabs...</span>
-              : <span>Voice mode ON - hold to speak | click speaker icon to hear AI response</span>
-          }
-        </div>
-      )}
-
-      {/* Info Cards */}
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-[11px] text-blue-700">
-          <strong>Smart Lazy Logic:</strong> AI learns your preferences and stores them in memory for future interactions.
-        </div>
-        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-600">
-          <strong>Self-Verification:</strong> Every response is verified against quality rules before reaching you.
+        <div className="grid grid-cols-2 gap-4 mt-2 relative z-10 text-[10px] text-slate-500">
+          <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl"><span className="text-blue-400 font-bold block mb-1">SMART LAZY LOGIC</span>AI learns your preferences and stores patterns.</div>
+          <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl"><span className="text-purple-400 font-bold block mb-1">SELF-VERIFICATION</span>Autonomous quality checks for every response.</div>
         </div>
       </div>
     </div>
