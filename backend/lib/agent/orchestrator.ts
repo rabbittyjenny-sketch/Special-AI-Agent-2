@@ -112,7 +112,7 @@ export async function processAgentRequest(
       ];
 
       const claudeResponse = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 2048,
         system: systemPrompt,
         tools: anthropicTools.length > 0 ? anthropicTools : undefined,
@@ -134,18 +134,20 @@ export async function processAgentRequest(
 
           // Feed tool result back to Claude for a proper response
           const followUp = await anthropic.messages.create({
-            model: "claude-sonnet-4-20250514",
+            model: "claude-haiku-4-5-20251001",
             max_tokens: 2048,
             system: systemPrompt,
             tools: anthropicTools,
             messages: [
               ...messages,
               { role: 'assistant', content: claudeResponse.content },
-              { role: 'user', content: [{
-                type: 'tool_result',
-                tool_use_id: toolUse.id,
-                content: toolResultContent
-              }]}
+              {
+                role: 'user', content: [{
+                  type: 'tool_result',
+                  tool_use_id: toolUse.id,
+                  content: toolResultContent
+                }]
+              }
             ]
           });
 
