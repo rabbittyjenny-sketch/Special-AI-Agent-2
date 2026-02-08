@@ -47,7 +47,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationId,
-          userId: 'test-user-123',
+          userId: '00000000-0000-0000-0000-000000000000',
           agentType,
           message: userMessage
         })
