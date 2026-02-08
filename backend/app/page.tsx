@@ -224,11 +224,10 @@ export default function Home() {
           <button
             key={opt.value}
             onClick={() => setAgentType(opt.value)}
-            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
-              agentType === opt.value
+            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${agentType === opt.value
                 ? `${opt.color} text-white shadow-sm`
                 : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}
+              }`}
           >
             {opt.label}
           </button>
@@ -262,13 +261,12 @@ export default function Home() {
                   onClick={() => playTTS(msg.content, i)}
                   disabled={ttsLoading === i}
                   title={playingIndex === i ? 'Stop playing' : 'Listen to response'}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    playingIndex === i
+                  className={`p-1.5 rounded-lg transition-all ${playingIndex === i
                       ? 'bg-blue-500 text-white'
                       : ttsLoading === i
                         ? 'bg-amber-100 text-amber-600'
                         : 'bg-slate-50 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
-                  }`}
+                    }`}
                 >
                   {ttsLoading === i ? (
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
@@ -334,11 +332,10 @@ export default function Home() {
         <button
           onClick={() => setVoiceEnabled(prev => !prev)}
           title={voiceEnabled ? 'Turn off voice input' : 'Turn on voice input'}
-          className={`p-2.5 rounded-xl transition-all shrink-0 ${
-            voiceEnabled
+          className={`p-2.5 rounded-xl transition-all shrink-0 ${voiceEnabled
               ? 'bg-red-500 text-white shadow-sm hover:bg-red-600'
               : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
-          }`}
+            }`}
         >
           {/* Mic icon */}
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -363,31 +360,30 @@ export default function Home() {
           {/* Voice Record Button (only when voice enabled) */}
           {voiceEnabled && (
             <button
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onMouseLeave={stopRecording}
-              onTouchStart={startRecording}
-              onTouchEnd={stopRecording}
+              onClick={() => isRecording ? stopRecording() : startRecording()}
               disabled={loading || isTranscribing}
-              title="Hold to record"
-              className={`p-2 rounded-xl transition-all ${
-                isRecording
+              title={isRecording ? "Click to stop" : "Click to record"}
+              className={`p-2 rounded-xl transition-all ${isRecording
                   ? 'bg-red-500 text-white animate-pulse'
                   : isTranscribing
                     ? 'bg-amber-400 text-white'
                     : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              } disabled:opacity-30`}
+                } disabled:opacity-30`}
             >
               {isTranscribing ? (
                 /* Loading spinner */
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
                   <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
                 </svg>
+              ) : isRecording ? (
+                /* Stop icon */
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="6" y="6" width="12" height="12"></rect>
+                </svg>
               ) : (
                 /* Record circle */
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={isRecording ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"></circle>
-                  {isRecording && <circle cx="12" cy="12" r="4" fill="white"></circle>}
                 </svg>
               )}
             </button>
