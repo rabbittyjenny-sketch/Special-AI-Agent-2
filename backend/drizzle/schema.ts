@@ -106,6 +106,50 @@ export const mcpToolCalls = pgTable('mcp_tool_calls', {
     completedAt: timestamp('completed_at', { withTimezone: true }),
 });
 
+// --- Attachments (Phase 2: Enhanced with Cloud Storage & Vision API) ---
+export const attachments = pgTable('attachments', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    messageId: uuid('message_id').references(() => messages.id, { onDelete: 'cascade' }),
+    conversationId: uuid('conversation_id').references(() => conversations.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    filename: varchar('filename', { length: 255 }).notNull(),
+    mimeType: varchar('mime_type', { length: 50 }).notNull(),
+    size: integer('size').notNull(), // in bytes
+    url: text('url').notNull(), // public URL or storage path
+    storageKey: varchar('storage_key', { length: 255 }), // R2/S3 storage key (Phase 2)
+    publicUrl: text('public_url'), // CDN public URL (Phase 2)
+    metadata: jsonb('metadata').default({}), // width, height, format, etc
+    visionAnalysis: jsonb('vision_analysis'), // Claude Vision API results (Phase 2)
+    uploadedAt: timestamp('uploaded_at', { withTimezone: true }).defaultNow(),
+    analyzedAt: timestamp('analyzed_at', { withTimezone: true }), // When vision analysis completed (Phase 2)
+}, (table) => {
+    return {
+        convIdIdx: index('idx_attachments_conversation_id').on(table.conversationId),
+        userIdIdx: index('idx_attachments_user_id').on(table.userId),
+        messageIdIdx: index('idx_attachments_message_id').on(table.messageId),
+        storageKeyIdx: index('idx_attachments_storage_key').on(table.storageKey), // Phase 2: Fast lookup by storage key
+    };
+});
+
+// --- Image Analyses (Phase 2: Vision API Analysis Results) ---
+export const imageAnalyses = pgTable('image_analyses', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    attachmentId: uuid('attachment_id').references(() => attachments.id, { onDelete: 'cascade' }).notNull(),
+    agentType: agentTypeEnum('agent_type').notNull(),
+    analysis: text('analysis').notNull(), // Full analysis text
+    summary: text('summary'), // Condensed summary
+    detectedType: varchar('detected_type', { length: 50 }), // design, data, code, other
+    confidence: decimal('confidence', { precision: 3, scale: 2 }).default('0.00'), // 0-100 confidence score
+    keyPoints: jsonb('key_points').default([]), // Array of key insights
+    metadata: jsonb('metadata').default({}), // Additional metadata
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => {
+    return {
+        attachmentIdIdx: index('idx_image_analyses_attachment_id').on(table.attachmentId),
+        agentTypeIdx: index('idx_image_analyses_agent_type').on(table.agentType),
+    };
+});
+
 // --- Knowledge Base ---
 export const knowledgeBase = pgTable('knowledge_base', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -180,3 +224,5 @@ export const agentMemory = pgTable('agent_memory', {
 
 export type KnowledgeBase = typeof knowledgeBase.$inferSelect;
 export type AgentMemory = typeof agentMemory.$inferSelect;
+export type Attachment = typeof attachments.$inferSelect;
+export type ImageAnalysis = typeof imageAnalyses.$inferSelect;
