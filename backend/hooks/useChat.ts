@@ -3,9 +3,23 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 // Types
+export interface Attachment {
+    id: string;
+    filename: string;
+    mimeType: string;
+    size: number;
+    url: string;
+    storageKey: string;
+    metadata?: {
+        base64?: string;
+        [key: string]: any;
+    };
+}
+
 export interface Message {
     role: 'user' | 'assistant';
     content: string;
+    attachments?: Attachment[];
     metadata?: {
         confidence?: number;
         verified?: boolean;
@@ -18,6 +32,9 @@ export function useChat() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -28,15 +45,71 @@ export function useChat() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, loading]);
 
+    const handleUpload = useCallback(async (files: File[]) => {
+        if (!files.length) return;
+
+        // Clear previous errors
+        setUploadError('');
+        setIsUploading(true);
+
+        try {
+            // Validate file size (5MB max per file)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            const oversizedFiles = files.filter(f => f.size > maxSize);
+            if (oversizedFiles.length > 0) {
+                throw new Error(`ไฟล์ใหญ่เกิน 5MB: ${oversizedFiles.map(f => f.name).join(', ')}`);
+            }
+
+            const formData = new FormData();
+            files.forEach(file => formData.append('file', file));
+            formData.append('userId', 'null'); // Will be updated when message is sent
+            formData.append('conversationId', 'null'); // Will be updated when message is sent
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || `เกิดข้อผิดพลาด (${res.status})`);
+            }
+
+            const result = await res.json();
+
+            if (result.success && result.attachments) {
+                setAttachments(prev => [...prev, ...result.attachments]);
+            } else if (result.errors && result.errors.length > 0) {
+                setUploadError(result.errors.join(', '));
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            setUploadError(error instanceof Error ? error.message : 'ไม่สามารถอัปโหลดไฟล์ได้');
+        } finally {
+            setIsUploading(false);
+        }
+    }, [conversationId]);
+
+    const removeAttachment = useCallback((id: string) => {
+        setAttachments(prev => prev.filter(a => a.id !== id));
+    }, []);
+
     const sendMessage = useCallback(async (agentType: string) => {
-        if (!input.trim()) return;
+        if (!input.trim() && attachments.length === 0) return;
 
         const userMessage = input;
+        const currentAttachments = [...attachments];
+
         setInput('');
+        setAttachments([]); // Clear attachments immediately
         setLoading(true);
 
         // Add user message immediately
-        setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+        setMessages(prev => [...prev, {
+            role: 'user',
+            content: userMessage,
+            attachments: currentAttachments
+        }]);
 
         try {
             const res = await fetch('/api/chat', {
@@ -46,7 +119,8 @@ export function useChat() {
                     conversationId,
                     userId: '00000000-0000-0000-0000-000000000000',
                     agentType,
-                    message: userMessage
+                    message: userMessage,
+                    attachments: currentAttachments
                 })
             });
 
@@ -71,7 +145,7 @@ export function useChat() {
         } finally {
             setLoading(false);
         }
-    }, [input, conversationId]);
+    }, [input, conversationId, attachments]);
 
     return {
         messages,
@@ -79,6 +153,11 @@ export function useChat() {
         setInput,
         loading,
         sendMessage,
-        messagesEndRef
+        messagesEndRef,
+        attachments,
+        isUploading,
+        uploadError,
+        handleUpload,
+        removeAttachment
     };
 }

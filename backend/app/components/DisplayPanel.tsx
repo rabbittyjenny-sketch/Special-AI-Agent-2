@@ -89,8 +89,8 @@ export function DisplayPanel({
 
                             {/* Bubble */}
                             <div className={`p-8 w-full shadow-sm text-lg leading-8 transition-all duration-300 relative group-hover:shadow-md ${msg.role === 'user'
-                                    ? 'bg-slate-800 rounded-[24px] rounded-tr-sm'
-                                    : 'bg-slate-50 border border-slate-100 text-slate-600 rounded-[24px] rounded-tl-sm shadow-soft-sm'
+                                ? 'bg-slate-800 rounded-[24px] rounded-tr-sm'
+                                : 'bg-slate-50 border border-slate-100 text-slate-600 rounded-[24px] rounded-tl-sm shadow-soft-sm'
                                 }`}>
                                 {msg.role === 'assistant' ? (
                                     // AI Text - Deep Gray (slate-600) for comfort
@@ -99,12 +99,35 @@ export function DisplayPanel({
                                     </div>
                                 ) : (
                                     // User Text - Pure White
-                                    <div
-                                        className="whitespace-pre-wrap font-semibold type-body"
-                                        style={{ color: '#FFFFFF' }}
-                                    >
-                                        {msg.content}
-                                    </div>
+                                    <>
+                                        {/* Attachments */}
+                                        {msg.attachments && msg.attachments.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mb-4">
+                                                {msg.attachments.map((att, idx) => (
+                                                    <div key={idx} className="relative group/img">
+                                                        {att.metadata?.base64 && att.mimeType.startsWith('image/') ? (
+                                                            <img
+                                                                src={`data:${att.mimeType};base64,${att.metadata.base64}`}
+                                                                alt={att.filename}
+                                                                className="max-w-sm rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                                                            />
+                                                        ) : (
+                                                            <div className="px-3 py-2 bg-white/10 rounded-lg text-xs">
+                                                                📎 {att.filename}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div
+                                            className="whitespace-pre-wrap font-semibold type-body"
+                                            style={{ color: '#FFFFFF' }}
+                                        >
+                                            {msg.content}
+                                        </div>
+                                    </>
                                 )}
 
                                 {/* Metadata */}

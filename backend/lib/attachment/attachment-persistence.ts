@@ -17,8 +17,8 @@ export interface AttachmentWithAnalysis extends Attachment {
  * Stores storage key, public URL, and initial metadata
  */
 export async function persistAttachment(
-  conversationId: string,
-  userId: string,
+  conversationId: string | null,
+  userId: string | null,
   messageId: string | null,
   fileName: string,
   mimeType: string,
@@ -148,6 +148,36 @@ export async function getAttachmentWithAnalysis(attachmentId: string): Promise<A
     return null;
   }
 }
+
+/**
+ * Get multiple attachments by IDs (for context window)
+ * Returns attachments with base64 data for Vision API
+ */
+export async function getAttachmentsByIds(attachmentIds: string[]): Promise<Attachment[]> {
+  if (!attachmentIds || attachmentIds.length === 0) {
+    return [];
+  }
+
+  try {
+    // Create placeholders for SQL IN clause
+    const placeholders = attachmentIds.map((_, i) => `$${i + 1}`).join(', ');
+
+    const result = await sql(
+      `
+      SELECT * FROM attachments
+      WHERE id IN (${placeholders})
+      ORDER BY uploaded_at ASC
+      `,
+      attachmentIds
+    );
+
+    return result.map(mapRowToAttachment);
+  } catch (error) {
+    console.error('Failed to get attachments by IDs:', error);
+    return [];
+  }
+}
+
 
 /**
  * List attachments for a conversation

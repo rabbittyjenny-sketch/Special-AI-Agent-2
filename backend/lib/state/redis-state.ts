@@ -66,8 +66,27 @@ export async function addMessageToState(
         return;
     }
 
+    // 🔥 Strip base64 from attachments to save Redis space
+    // We'll fetch base64 from database when needed
+    let optimizedAttachments = message.attachments;
+    if (message.attachments && message.attachments.length > 0) {
+        optimizedAttachments = message.attachments.map(att => ({
+            id: att.id,
+            filename: att.filename,
+            mimeType: att.mimeType,
+            size: att.size,
+            url: att.url,
+            // Don't store base64 in Redis - fetch from DB when needed
+            metadata: {
+                ...att.metadata,
+                base64: undefined // Remove base64
+            }
+        }));
+    }
+
     const newMessage: Message = {
         ...message,
+        attachments: optimizedAttachments,
         timestamp: new Date().toISOString()
     };
 

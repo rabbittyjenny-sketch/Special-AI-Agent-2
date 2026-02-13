@@ -1,16 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
-import { validateAttachment, createAttachmentMetadata, fileToBase64 } from '@/lib/attachment/attachment-manager';
-import { uploadFile } from '@/lib/attachment/storage-manager';
 import { persistAttachment } from '@/lib/attachment/attachment-persistence';
-import { handleUploadError, validateFileBeforeUpload } from '@/lib/attachment/error-handler';
+import { validateFileBeforeUpload } from '@/lib/attachment/error-handler';
 import { Attachment } from '@/lib/types';
+import crypto from 'crypto';
 
 /**
- * Phase 2: Enhanced upload endpoint
+ * Phase 2.6: File Upload Endpoint (Neon PostgreSQL)
  * - Supports multiple file uploads (up to 5)
- * - Uploads to Cloudflare R2
- * - Persists metadata to PostgreSQL
- * - Returns storageKey, publicUrl, and base64 for vision API
+ * - Stores files as Base64 in Neon PostgreSQL
+ * - Returns storageKey, metadata with base64 for Vision API
  */
 export async function POST(req: Request) {
   try {
@@ -20,15 +18,15 @@ export async function POST(req: Request) {
     const conversationId = formData.get('conversationId') as string;
     const messageId = (formData.get('messageId') as string) || null;
 
-    // Validate inputs
-    if (!files || files.length === 0 || !userId || !conversationId) {
+    // Validate inputs (allow null for conversationId and userId)
+    if (!files || files.length === 0) {
       return Response.json(
-        { error: 'Missing required fields: file(s), userId, conversationId' },
+        { error: 'Missing required fields: file(s)' },
         { status: 400 }
       );
     }
 
-    // Phase 2.5: Support max 5 files per upload
+    // Support max 5 files per upload
     if (files.length > 5) {
       return Response.json(
         { error: 'Maximum 5 files allowed per upload' },
@@ -55,45 +53,40 @@ export async function POST(req: Request) {
         const bufferInstance = Buffer.from(buffer);
         const base64Data = bufferInstance.toString('base64');
 
-        // Detect agent type from filename (for R2 organization)
+        // Detect agent type from filename
         const detectedAgent = detectAgentFromFilename(file.name);
 
-        // Step 3: Upload to Cloudflare R2
-        console.log(`📤 Uploading ${file.name} to Cloudflare R2...`);
-        const r2Result = await uploadFile(
-          bufferInstance,
-          file.name,
-          file.type,
-          detectedAgent
-        );
+        // Step 3: Generate storage key
+        const timestamp = Date.now();
+        const randomSuffix = crypto.randomBytes(4).toString('hex');
+        const cleanFileName = file.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9.-]/g, '');
+        const storageKey = detectedAgent
+          ? `${detectedAgent}/${timestamp}-${randomSuffix}-${cleanFileName}`
+          : `uploads/${timestamp}-${randomSuffix}-${cleanFileName}`;
 
-        console.log(`✅ Uploaded to R2: ${r2Result.key}`);
+        console.log(`📤 Processing ${file.name}...`);
 
-        // Step 4: Create attachment metadata
-        const attachmentMetadata = createAttachmentMetadata(
-          new File([buffer], file.name, { type: file.type }),
-          userId
-        );
-
-        // Step 5: Persist to PostgreSQL
+        // Step 4: Persist to Neon PostgreSQL
         console.log(`💾 Saving to database...`);
         const persistedAttachment = await persistAttachment(
-          conversationId,
-          userId,
+          conversationId === 'null' ? null : conversationId,
+          userId === 'null' ? null : userId,
           messageId,
           file.name,
           file.type,
           file.size,
-          r2Result.key,        // storageKey
-          r2Result.url,        // publicUrl
+          storageKey,
+          `/api/files/${storageKey}`, // Internal reference URL
           {
-            base64: base64Data, // For vision API
+            base64: base64Data, // For Vision API
             detectedAgent,
-            format: file.type.split('/')[1]
+            format: file.type.split('/')[1],
+            width: undefined, // Can be extracted from image if needed
+            height: undefined
           }
         );
 
-        // Step 6: Add to response
+        // Step 5: Add to response
         uploadedAttachments.push({
           ...persistedAttachment,
           metadata: {
@@ -106,13 +99,8 @@ export async function POST(req: Request) {
         console.log(`✅ Successfully processed: ${file.name}`);
 
       } catch (error) {
-        console.error(`Error processing ${file.name}:`, error);
-        const errorMsg = handleUploadError(
-          error as Error,
-          file.name,
-          file.size
-        );
-        errors.push(errorMsg.message);
+        console.error(`❌ Error processing ${file.name}:`, error);
+        errors.push(`${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
@@ -141,7 +129,7 @@ export async function POST(req: Request) {
 
 /**
  * Helper: Detect agent type from filename
- * Used for organizing files in R2 (design/, analyst/, etc)
+ * Used for organizing files in database
  */
 function detectAgentFromFilename(filename: string): string {
   const lower = filename.toLowerCase();

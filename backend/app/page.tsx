@@ -49,6 +49,12 @@ export default function Home() {
             voiceEnabled={voice.voiceEnabled}
             onToggleVoice={voice.toggleVoice}
             loading={chat.loading}
+            // Upload Props
+            attachments={chat.attachments}
+            onUpload={chat.handleUpload}
+            isUploading={chat.isUploading}
+            uploadError={chat.uploadError}
+            onRemoveAttachment={chat.removeAttachment}
           />
         </section>
 
@@ -65,6 +71,12 @@ export default function Home() {
             voiceEnabled={voice.voiceEnabled}
             onToggleVoice={voice.toggleVoice}
             loading={chat.loading}
+            // Upload Props
+            attachments={chat.attachments}
+            onUpload={chat.handleUpload}
+            isUploading={chat.isUploading}
+            uploadError={chat.uploadError}
+            onRemoveAttachment={chat.removeAttachment}
           />
         </section>
 

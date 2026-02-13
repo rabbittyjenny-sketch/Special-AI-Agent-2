@@ -262,13 +262,47 @@ export async function processAgentRequest(
   let escalationDecision: { shouldEscalate: boolean; reason?: string } = { shouldEscalate: false };
 
   try {
+    // 🔥 Hydrate attachments from database (fetch base64 data)
+    // This prevents storing large base64 strings in Redis
+    const { getAttachmentsByIds } = await import('@/lib/attachment/attachment-persistence');
+
+    // Collect all attachment IDs from context window
+    const allAttachmentIds: string[] = [];
+    for (const msg of contextWindow) {
+      if (msg.attachments && msg.attachments.length > 0) {
+        for (const att of msg.attachments) {
+          if (att.id) {
+            allAttachmentIds.push(att.id);
+          }
+        }
+      }
+    }
+
+    // Fetch all attachments with base64 data in one query
+    const hydratedAttachments = await getAttachmentsByIds(allAttachmentIds);
+    const attachmentMap = new Map(hydratedAttachments.map(att => [att.id, att]));
+
     // Retry loop (max 2 attempts)
     while (retryCount < 2) {
       const messages: Anthropic.MessageParam[] = [
-        ...contextWindow.map(m => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content
-        })),
+        ...contextWindow.map(m => {
+          // Hydrate attachments with base64 from database
+          let hydratedMessageAttachments = m.attachments;
+          if (m.attachments && m.attachments.length > 0) {
+            hydratedMessageAttachments = m.attachments.map(att => {
+              const fullAttachment = attachmentMap.get(att.id);
+              return fullAttachment || att; // Use full data if available
+            });
+          }
+
+          return {
+            role: m.role as 'user' | 'assistant',
+            // Include attachments in context for user messages
+            content: m.role === 'user' && hydratedMessageAttachments && hydratedMessageAttachments.length > 0
+              ? buildVisionContent(m.content, hydratedMessageAttachments)
+              : m.content
+          };
+        }),
         {
           role: 'user' as const,
           content: buildVisionContent(request.userMessage, request.attachments)

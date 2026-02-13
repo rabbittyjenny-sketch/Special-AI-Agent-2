@@ -110,8 +110,8 @@ export const mcpToolCalls = pgTable('mcp_tool_calls', {
 export const attachments = pgTable('attachments', {
     id: uuid('id').defaultRandom().primaryKey(),
     messageId: uuid('message_id').references(() => messages.id, { onDelete: 'cascade' }),
-    conversationId: uuid('conversation_id').references(() => conversations.id, { onDelete: 'cascade' }).notNull(),
-    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    conversationId: uuid('conversation_id').references(() => conversations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
     filename: varchar('filename', { length: 255 }).notNull(),
     mimeType: varchar('mime_type', { length: 50 }).notNull(),
     size: integer('size').notNull(), // in bytes

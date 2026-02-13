@@ -3,7 +3,7 @@ import { processAgentRequest } from '@/lib/agent/orchestrator';
 
 export async function POST(req: Request) {
     try {
-        const { conversationId, userId, agentType, message } = await req.json();
+        const { conversationId, userId, agentType, message, attachments } = await req.json();
 
         // Validate
         if (!conversationId || !userId || !message) {
@@ -17,7 +17,8 @@ export async function POST(req: Request) {
             conversationId,
             userId,
             agentType: targetAgent,
-            userMessage: message
+            userMessage: message,
+            attachments: attachments || [] // Pass attachments to orchestrator
         });
 
         // Return with all metadata
