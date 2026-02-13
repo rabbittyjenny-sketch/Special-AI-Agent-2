@@ -87,3 +87,151 @@ npm run dev
 3. **ห้ามเอา `sticky` ออกจาก Left Column:** จะทำให้ UX เสีย (วงแตก)
 
 *บันทึกโดย: Antigravity Agent (Code Specialist)*
+
+---
+
+# 📁 File Upload System & Vision API Integration
+**Added:** 2026-02-13  
+**Status:** Phase 2 Complete ✅
+
+## 🎯 Architecture Overview
+
+### Data Flow:
+```
+User → Upload → Neon DB (Base64) → Redis (Metadata only) → Claude Vision API
+```
+
+### Key Components:
+- `app/api/upload/route.ts` - Upload endpoint (บันทึกลง Neon)
+- `hooks/useChat.ts` - Upload logic + State management
+- `components/CommandCenter.tsx` - Upload UI
+- `components/DisplayPanel.tsx` - Image display in chat
+- `lib/attachment/attachment-persistence.ts` - Database operations
+- `lib/agent/orchestrator.ts` - Vision API integration
+- `lib/state/redis-state.ts` - Hot state management
+
+---
+
+## 🔥 Critical Design Decisions
+
+### 1. Base64 Storage Strategy (MUST FOLLOW!)
+
+**❌ ห้าม:** เก็บ Base64 ใน Redis (ใหญ่เกินไป ~1MB/รูป)  
+**✅ ต้อง:** เก็บ Base64 ใน Neon Database (`metadata.base64`)  
+**✅ ต้อง:** Redis เก็บแค่ metadata (id, filename, mimeType)
+
+**เหตุผล:**
+- Redis มี memory limit
+- Base64 ใหญ่มาก (1 รูป = 1-5MB)
+- ดึงจาก Database ตอนต้องใช้เท่านั้น (lazy loading)
+
+**Implementation:**
+```typescript
+// ❌ ผิด - เก็บ Base64 ใน Redis
+await redis.set('conv:123', {
+  messages: [{ attachments: [{ metadata: { base64: '...' } }] }]
+});
+
+// ✅ ถูก - เก็บแค่ ID
+await redis.set('conv:123', {
+  messages: [{ attachments: [{ id: 'abc', filename: 'cat.jpg' }] }]
+});
+
+// ดึง Base64 จาก Database ตอนต้องใช้
+const attachments = await getAttachmentsByIds(['abc']);
+```
+
+---
+
+### 2. Context Window with Images
+
+**ปัญหา:** AI ต้องเห็นรูปเก่าในบทสนทนา  
+**วิธีแก้:** Hydrate attachments จาก Database ก่อนส่งให้ Claude
+
+**Implementation in `orchestrator.ts`:**
+```typescript
+// Collect attachment IDs from context
+const allAttachmentIds = contextWindow
+  .flatMap(m => m.attachments?.map(a => a.id) || []);
+
+// Fetch base64 from database
+const hydratedAttachments = await getAttachmentsByIds(allAttachmentIds);
+
+// Map back to messages
+const messages = contextWindow.map(m => ({
+  role: m.role,
+  content: m.role === 'user' && m.attachments
+    ? buildVisionContent(m.content, hydrateAttachments(m.attachments))
+    : m.content
+}));
+```
+
+---
+
+### 3. Foreign Key Constraints
+
+**ปัญหา:** Upload ก่อนสร้าง Conversation → FK constraint error  
+**วิธีแก้:** ทำ `conversation_id` และ `user_id` เป็น NULLABLE
+
+```sql
+-- ❌ ผิด
+conversation_id UUID REFERENCES conversations(id) NOT NULL
+
+-- ✅ ถูก
+conversation_id UUID REFERENCES conversations(id) -- nullable
+```
+
+---
+
+## 📊 Database Schema
+
+```sql
+-- attachments table
+CREATE TABLE attachments (
+  id UUID PRIMARY KEY,
+  conversation_id UUID REFERENCES conversations(id), -- NULLABLE
+  user_id UUID REFERENCES users(id), -- NULLABLE
+  filename VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(50) NOT NULL,
+  size INTEGER NOT NULL,
+  url TEXT NOT NULL,
+  storage_key VARCHAR(255),
+  metadata JSONB, -- Contains base64 data
+  uploaded_at TIMESTAMP DEFAULT NOW()
+);
+
+-- image_analyses table
+CREATE TABLE image_analyses (
+  id UUID PRIMARY KEY,
+  attachment_id UUID REFERENCES attachments(id),
+  agent_type VARCHAR(50),
+  analysis TEXT,
+  summary TEXT,
+  confidence NUMERIC,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+---
+
+## ⚠️ ข้อห้ามเพิ่มเติม (DO NOT)
+
+❌ **ห้าม** เก็บ Base64 ใน Redis  
+❌ **ห้าม** ใช้ `NOT NULL` กับ `conversation_id` ใน attachments  
+❌ **ห้าม** ส่ง attachments โดยไม่มี `id`  
+❌ **ห้าม** ลืม hydrate attachments ใน context window  
+
+---
+
+## ✅ Best Practices เพิ่มเติม
+
+✅ **ต้อง** เก็บ Base64 ใน Database เท่านั้น  
+✅ **ต้อง** ดึง Base64 จาก Database ตอนต้องใช้  
+✅ **ต้อง** Strip Base64 ก่อนบันทึกลง Redis  
+✅ **ต้อง** Hydrate attachments ก่อนส่งให้ Claude  
+✅ **ต้อง** ใช้ `getAttachmentsByIds` สำหรับ bulk fetch
+
+---
+
+*บันทึกโดย: Antigravity Agent - File Upload System Implementation*
+
