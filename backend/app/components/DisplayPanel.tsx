@@ -35,7 +35,7 @@ export function DisplayPanel({
 
     return (
         <motion.div
-            className="h-full bg-white rounded-[32px] shadow-soft p-10 flex flex-col relative overflow-hidden font-sans border border-slate-100"
+            className="h-full bg-white rounded-[20px] shadow-soft p-4 md:p-5 flex flex-col relative overflow-hidden font-sans border border-slate-100"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -43,21 +43,21 @@ export function DisplayPanel({
 
             {/* Header */}
             <motion.header
-                className="flex justify-between items-end pb-8 mb-4 border-b border-slate-50 relative z-10 w-full flex-shrink-0"
+                className="flex justify-between items-end pb-3 mb-2 border-b border-slate-50 relative z-10 w-full flex-shrink-0"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
             >
                 <div>
                     <motion.div
-                        className="flex items-center gap-4"
+                        className="flex items-center gap-2"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3, duration: 0.5 }}
                     >
-                        <h2 className="type-h2 text-slate-800 tracking-tight">{activeAgent?.label}</h2>
+                        <h2 className="type-h2 text-sm text-slate-800 tracking-tight">{activeAgent?.label}</h2>
                         <motion.div
-                            className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-50 border border-slate-100"
+                            className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider bg-slate-50 border border-slate-100"
                             style={{ color: getHexColor(activeAgent?.color || 'bg-[#3b82f6]') }}
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -67,40 +67,39 @@ export function DisplayPanel({
                         </motion.div>
                     </motion.div>
                     <motion.p
-                        className="type-body text-sm mt-3 opacity-60 max-w-md line-clamp-2"
+                        className="type-body text-xs mt-1 opacity-60 max-w-md line-clamp-1"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 0.6 }}
                         transition={{ delay: 0.5, duration: 0.5 }}
                     >
-                        AI Assistant powered by STRATEGIC BRAIN & Verified Logic (Version 2.0).
-                        System ready for complex tasks.
+                        AI Assistant powered by STRATEGIC BRAIN & Verified Logic (v2.0)
                     </motion.p>
                 </div>
 
                 {/* Status */}
                 <motion.div
-                    className="flex flex-col items-end gap-2"
+                    className="flex flex-col items-end gap-1"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
                 >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                         <motion.span
-                            className={`w-2 h-2 rounded-full ${messages.length > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                            className={`w-1.5 h-1.5 rounded-full ${messages.length > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}
                             animate={messages.length > 0 ? {
                                 scale: [1, 1.3, 1],
                                 opacity: [1, 0.7, 1]
                             } : {}}
                             transition={{ duration: 2, repeat: Infinity }}
                         />
-                        <span className="type-label text-slate-400">STATUS: {messages.length > 0 ? 'ACTIVE' : 'IDLE'}</span>
+                        <span className="type-label text-[8px] text-slate-400">{messages.length > 0 ? 'ACTIVE' : 'IDLE'}</span>
                     </div>
-                    <span className="type-label text-[10px] opacity-40 font-mono tracking-widest">SESSION: {sessionId}</span>
+                    <span className="type-label text-[8px] opacity-40 font-mono tracking-widest">ID: {sessionId}</span>
                 </motion.div>
             </motion.header>
 
             {/* Chat History */}
-            <div className="flex-1 overflow-y-auto pr-6 scrollbar-thin space-y-8 pb-24 relative z-0">
+            <div className="flex-1 overflow-y-auto pr-3 scrollbar-thin space-y-4 pb-8 relative z-0">
                 <AnimatePresence mode="sync">
                     {messages.length === 0 ? (
                         <motion.div
@@ -112,18 +111,18 @@ export function DisplayPanel({
                             className="h-full flex flex-col items-center justify-center text-center select-none"
                         >
                             <motion.div
-                                className="w-32 h-32 bg-slate-50 rounded-full flex items-center justify-center mb-6 shadow-inner"
+                                className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 shadow-inner"
                                 animate={{
                                     scale: [1, 1.05, 1],
                                     opacity: [0.5, 0.7, 0.5]
                                 }}
                                 transition={{ duration: 3, repeat: Infinity }}
                             >
-                                <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                             </motion.div>
-                            <h3 className="type-h2 text-slate-300 mb-2">Awaiting Input</h3>
-                            <p className="type-body text-sm text-slate-300 max-w-xs mx-auto leading-6">
-                                Select an agent from the Command Center on the left to begin your session.
+                            <h3 className="type-h2 text-xs text-slate-300 mb-1">Awaiting Input</h3>
+                            <p className="type-body text-xs text-slate-300 max-w-xs mx-auto leading-5">
+                                Select an agent from the Command Center to begin.
                             </p>
                         </motion.div>
                     ) : (
@@ -134,20 +133,20 @@ export function DisplayPanel({
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                                 transition={{ delay: i * 0.05, duration: 0.5 }}
-                                className={`flex flex-col gap-3 ${msg.role === 'user' ? 'items-end pl-20' : 'items-start pr-20'} group`}
+                                className={`flex flex-col gap-1.5 ${msg.role === 'user' ? 'items-end pl-10' : 'items-start pr-10'} group`}
                             >
 
                             {/* Label */}
                             <motion.div
-                                className="flex items-center gap-3 opacity-60 px-2"
+                                className="flex items-center gap-2 opacity-60 px-1"
                                 whileHover={{ opacity: 1 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                <span className={`type-label text-[10px] ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                                    {msg.role === 'user' ? 'YOU (USER)' : `AI (${activeAgent?.label.toUpperCase()})`}
+                                <span className={`type-label text-[8px] ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                                    {msg.role === 'user' ? 'YOU' : `AI (${activeAgent?.label.toUpperCase()})`}
                                 </span>
                                 <motion.span
-                                    className="w-8 h-[1px] bg-slate-200"
+                                    className="w-6 h-[1px] bg-slate-200"
                                     initial={{ scaleX: 0 }}
                                     animate={{ scaleX: 1 }}
                                     transition={{ delay: i * 0.05 + 0.3, duration: 0.4 }}
@@ -156,16 +155,16 @@ export function DisplayPanel({
 
                             {/* Bubble */}
                             <motion.div
-                                className={`p-8 w-full shadow-sm text-lg leading-8 relative ${msg.role === 'user'
-                                    ? 'bg-slate-800 rounded-[24px] rounded-tr-sm'
-                                    : 'bg-slate-50 border border-slate-100 text-slate-600 rounded-[24px] rounded-tl-sm shadow-soft-sm'
+                                className={`p-3 md:p-4 w-full shadow-sm text-sm leading-6 relative ${msg.role === 'user'
+                                    ? 'bg-slate-800 rounded-[16px] rounded-tr-sm'
+                                    : 'bg-slate-50 border border-slate-100 text-slate-600 rounded-[16px] rounded-tl-sm shadow-soft-sm'
                                     }`}
-                                whileHover={{ scale: 1.01, boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}
+                                whileHover={{ scale: 1.005, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}
                                 transition={{ duration: 0.2 }}
                             >
                                 {msg.role === 'assistant' ? (
                                     // AI Text - Deep Gray (slate-600) for comfort
-                                    <div className="prose prose-slate prose-lg max-w-none text-slate-600 font-medium">
+                                    <div className="prose prose-slate prose-sm max-w-none text-slate-600 font-medium">
                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                                     </div>
                                 ) : (
@@ -219,24 +218,24 @@ export function DisplayPanel({
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.4 }}
-                                        className="mt-6 pt-4 border-t border-slate-100/10 flex flex-wrap gap-3 items-center"
+                                        className="mt-3 pt-2 border-t border-slate-100/10 flex flex-wrap gap-2 items-center"
                                     >
                                         {msg.metadata.verified && (
                                             <motion.div
                                                 initial={{ scale: 0.8 }}
                                                 animate={{ scale: 1 }}
                                                 transition={{ delay: 0.5, type: "spring" }}
-                                                className="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-2"
+                                                className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1.5"
                                             >
                                                 <motion.span
-                                                    className="w-1.5 h-1.5 bg-emerald-500 rounded-full"
+                                                    className="w-1 h-1 bg-emerald-500 rounded-full"
                                                     animate={{
                                                         scale: [1, 1.3, 1],
                                                         opacity: [1, 0.7, 1]
                                                     }}
                                                     transition={{ duration: 2, repeat: Infinity }}
                                                 />
-                                                <span className="type-label text-emerald-600 text-[9px]">VERIFIED LOGIC</span>
+                                                <span className="type-label text-emerald-600 text-[8px]">VERIFIED</span>
                                             </motion.div>
                                         )}
                                         {msg.metadata.confidence && (
@@ -244,7 +243,7 @@ export function DisplayPanel({
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 transition={{ delay: 0.6 }}
-                                                className="type-label text-slate-400 text-[9px]"
+                                                className="type-label text-slate-400 text-[8px]"
                                             >
                                                 CONFIDENCE: {msg.metadata.confidence}%
                                             </motion.span>
@@ -265,38 +264,38 @@ export function DisplayPanel({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
-                            className="flex flex-col items-start gap-3 mt-4"
+                            className="flex flex-col items-start gap-1.5 mt-2"
                         >
                             <motion.span
-                                className="type-label text-slate-300 px-2"
+                                className="type-label text-[8px] text-slate-300 px-1"
                                 animate={{ opacity: [0.5, 1, 0.5] }}
                                 transition={{ duration: 1.5, repeat: Infinity }}
                             >
-                                SYSTEM PROCESSING
+                                PROCESSING
                             </motion.span>
                             <motion.div
-                                className="bg-white border border-slate-100 rounded-[24px] rounded-tl-sm p-6 w-fit shadow-soft-sm flex items-center gap-4"
+                                className="bg-white border border-slate-100 rounded-[16px] rounded-tl-sm p-3 w-fit shadow-soft-sm flex items-center gap-2"
                                 animate={{ scale: [1, 1.01, 1] }}
                                 transition={{ duration: 1.5, repeat: Infinity }}
                             >
-                                <div className="flex gap-1.5">
+                                <div className="flex gap-1">
                                     <motion.div
-                                        className="w-2.5 h-2.5 bg-slate-400 rounded-full"
-                                        animate={{ y: [0, -8, 0] }}
+                                        className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                                        animate={{ y: [0, -6, 0] }}
                                         transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
                                     />
                                     <motion.div
-                                        className="w-2.5 h-2.5 bg-slate-400 rounded-full"
-                                        animate={{ y: [0, -8, 0] }}
+                                        className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                                        animate={{ y: [0, -6, 0] }}
                                         transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
                                     />
                                     <motion.div
-                                        className="w-2.5 h-2.5 bg-slate-400 rounded-full"
-                                        animate={{ y: [0, -8, 0] }}
+                                        className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                                        animate={{ y: [0, -6, 0] }}
                                         transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
                                     />
                                 </div>
-                                <span className="type-label text-slate-500 tracking-wider">GENERATING RESPONSE...</span>
+                                <span className="type-label text-[9px] text-slate-500 tracking-wider">GENERATING...</span>
                             </motion.div>
                         </motion.div>
                     )}

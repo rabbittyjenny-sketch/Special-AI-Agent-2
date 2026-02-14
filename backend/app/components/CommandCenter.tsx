@@ -61,7 +61,7 @@ export function CommandCenter({
     };
 
     return (
-        <div className="flex flex-col h-full lg:pr-8 gap-8">
+        <div className="flex flex-col h-full lg:pr-6 gap-5">
             {/* 1. Header (H1) */}
             <motion.header
                 className="flex justify-between items-start"
@@ -74,17 +74,17 @@ export function CommandCenter({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1, duration: 0.5 }}
                 >
-                    <h1 className="type-h1 text-slate-700">Command Center</h1>
-                    <p className="type-button text-slate-400 mt-2">iDEAS365 x STRATEGIC AI</p>
+                    <h1 className="type-h1 text-base md:text-lg text-slate-700">Command Center</h1>
+                    <p className="type-button text-[9px] text-slate-400 mt-0.5">iDEAS365 x STRATEGIC AI</p>
                 </motion.div>
                 <motion.div
-                    className="px-5 py-3 rounded-full bg-[#EFF2F9] shadow-soft-inset flex items-center gap-3"
+                    className="px-3 py-2 rounded-full bg-[#EFF2F9] shadow-soft-inset flex items-center gap-2"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
                 >
                     <motion.span
-                        className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
+                        className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
                         animate={{
                             scale: [1, 1.2, 1],
                             opacity: [1, 0.7, 1]
@@ -95,12 +95,12 @@ export function CommandCenter({
                             ease: "easeInOut"
                         }}
                     />
-                    <span className="type-label text-emerald-600">SYSTEM ONLINE</span>
+                    <span className="type-label text-emerald-600 text-[9px]">ONLINE</span>
                 </motion.div>
             </motion.header>
 
             {/* 2. Agent Grid (Interactive Cards) */}
-            <section className="grid grid-cols-2 gap-6 flex-1 max-h-[400px]">
+            <section className="grid grid-cols-2 gap-3 flex-1 max-h-[320px]">
                 {agentOptions.map((opt, index) => {
                     const hexColor = getHexColor(opt.color);
                     const isActive = currentAgent === opt.value;
@@ -115,9 +115,9 @@ export function CommandCenter({
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-                            whileHover={{ y: -4, scale: 1.02 }}
+                            whileHover={{ y: -2, scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`cursor-pointer rounded-master p-6 text-left relative overflow-hidden group flex flex-col justify-between h-full min-h-[160px] ${isActive
+                            className={`cursor-pointer rounded-[20px] p-4 text-left relative overflow-hidden group flex flex-col justify-between h-full min-h-[110px] ${isActive
                                 ? 'bg-[#EFF2F9] shadow-soft-inset ring-2 ring-white/50'
                                 : 'bg-[#EFF2F9] shadow-soft'
                                 }`}
@@ -136,7 +136,7 @@ export function CommandCenter({
 
                             <div className="flex justify-between w-full relative z-10">
                                 {/* Mascot Character */}
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     <AgentMascot
                                         agentId={opt.value}
                                         isActive={isActive}
@@ -159,16 +159,16 @@ export function CommandCenter({
                             </div>
 
                             <motion.div
-                                className="mt-4 relative z-10"
+                                className="mt-2 relative z-10"
                                 animate={{
-                                    x: isActive ? 4 : 0
+                                    x: isActive ? 2 : 0
                                 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <h3 className={`type-h2 text-lg mb-1 transition-colors ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
+                                <h3 className={`type-h2 text-sm mb-0.5 transition-colors ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
                                     {opt.label}
                                 </h3>
-                                <p className="type-label text-[10px] opacity-70">{opt.role}</p>
+                                <p className="type-label text-[9px] opacity-60">{opt.role}</p>
                             </motion.div>
 
                             {/* Bottom Border Indicator with Wave Animation */}
@@ -208,15 +208,15 @@ export function CommandCenter({
 
             {/* 3. Input Deck */}
             <motion.section
-                className="mt-auto bg-[#EFF2F9] rounded-master shadow-soft p-8 relative z-10 border border-white/40"
+                className="mt-auto bg-[#EFF2F9] rounded-[20px] shadow-soft p-4 relative z-10 border border-white/40"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7, duration: 0.6 }}
             >
-                <div className="flex justify-between items-center mb-6">
-                    <span className="type-label text-slate-500">INPUT COMMAND</span>
+                <div className="flex justify-between items-center mb-3">
+                    <span className="type-label text-slate-500 text-[9px]">INPUT</span>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         {/* Upload Button */}
                         <input
                             type="file"
@@ -231,14 +231,14 @@ export function CommandCenter({
                             disabled={isUploading || loading}
                             whileHover={{ scale: isUploading || loading ? 1 : 1.05 }}
                             whileTap={{ scale: isUploading || loading ? 1 : 0.95 }}
-                            className={`h-8 px-4 rounded-full flex items-center gap-2 transition-all duration-300 ${isUploading
+                            className={`h-7 px-3 rounded-full flex items-center gap-1.5 transition-all duration-300 ${isUploading
                                 ? 'bg-slate-200 text-slate-400 cursor-wait'
                                 : 'bg-white text-slate-500 hover:text-slate-700 shadow-sm border border-slate-100'
                                 }`}
                         >
                             {/* Clip Icon */}
                             <motion.svg
-                                className="w-4 h-4"
+                                className="w-3.5 h-3.5"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -247,27 +247,27 @@ export function CommandCenter({
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                             </motion.svg>
-                            <span className="type-button text-[10px]">{isUploading ? 'UPLOADING...' : 'ATTACH'}</span>
+                            <span className="type-button text-[9px]">{isUploading ? 'UPLOADING' : 'ATTACH'}</span>
                         </motion.button>
 
                         <motion.button
                             onClick={onToggleVoice}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className={`h-8 px-4 rounded-full flex items-center gap-2 transition-all duration-300 ${voiceEnabled
+                            className={`h-7 px-3 rounded-full flex items-center gap-1.5 transition-all duration-300 ${voiceEnabled
                                 ? 'bg-emerald-50 text-emerald-600 shadow-sm border border-emerald-100'
                                 : 'bg-slate-200/50 text-slate-400'
                                 }`}
                         >
                             <motion.span
-                                className={`w-2 h-2 rounded-full transition-colors ${voiceEnabled ? 'bg-emerald-500' : 'bg-slate-400'}`}
+                                className={`w-1.5 h-1.5 rounded-full transition-colors ${voiceEnabled ? 'bg-emerald-500' : 'bg-slate-400'}`}
                                 animate={voiceEnabled ? {
                                     scale: [1, 1.3, 1],
                                     opacity: [1, 0.7, 1]
                                 } : {}}
                                 transition={{ duration: 1.5, repeat: Infinity }}
                             />
-                            <span className="type-button text-[10px]">VOICE MODE</span>
+                            <span className="type-button text-[9px]">VOICE</span>
                         </motion.button>
                     </div>
                 </div>
@@ -335,10 +335,10 @@ export function CommandCenter({
                         }
                     }}
                     placeholder={`Instruct ${activeAgent?.label}...`}
-                    className="w-full bg-[#EFF2F9] shadow-soft-inset rounded-inner p-6 min-h-[140px] outline-none type-body text-lg resize-none mb-6 placeholder:text-slate-300 focus:ring-2 focus:ring-slate-100 transition-all font-medium"
+                    className="w-full bg-[#EFF2F9] shadow-soft-inset rounded-inner p-3 min-h-[70px] outline-none type-body text-sm resize-none mb-3 placeholder:text-slate-300 focus:ring-2 focus:ring-slate-100 transition-all font-medium"
                 />
 
-                <div className="grid grid-cols-2 gap-6 h-14">
+                <div className="grid grid-cols-2 gap-3 h-9">
                     <motion.button
                         onClick={isRecording ? onToggleRecording : onToggleRecording}
                         disabled={!voiceEnabled}
@@ -358,14 +358,14 @@ export function CommandCenter({
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.8 }}
-                                    className="flex items-center gap-3"
+                                    className="flex items-center gap-1.5"
                                 >
                                     <motion.span
-                                        className="w-3 h-3 bg-white rounded-sm"
+                                        className="w-2 h-2 bg-white rounded-sm"
                                         animate={{ rotate: 360 }}
                                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                                     />
-                                    <span className="type-button">STOP</span>
+                                    <span className="type-button text-[9px]">STOP</span>
                                 </motion.div>
                             ) : (
                                 <motion.div
@@ -373,10 +373,10 @@ export function CommandCenter({
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.8 }}
-                                    className="flex items-center gap-3"
+                                    className="flex items-center gap-1.5"
                                 >
-                                    <svg className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                                    <span className="type-button">MIC START</span>
+                                    <svg className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                                    <span className="type-button text-[9px]">MIC</span>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -422,11 +422,11 @@ export function CommandCenter({
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    className="flex items-center gap-3"
+                                    className="flex items-center gap-1.5"
                                 >
-                                    <span className="type-button">EXECUTE</span>
+                                    <span className="type-button text-[9px]">EXECUTE</span>
                                     <motion.svg
-                                        className="w-5 h-5"
+                                        className="w-3.5 h-3.5"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"

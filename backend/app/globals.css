@@ -13,20 +13,20 @@
   }
   
   /* Typography Hierarchy */
-  .type-h1 { 
-    @apply text-3xl md:text-4xl font-bold tracking-tight text-slate-800; 
+  .type-h1 {
+    @apply text-xl md:text-2xl font-bold tracking-tight text-slate-800;
   }
-  .type-h2 { 
-    @apply text-2xl font-bold tracking-tight text-slate-700; 
+  .type-h2 {
+    @apply text-base md:text-lg font-bold tracking-tight text-slate-700;
   }
-  .type-body { 
-    @apply text-base font-normal text-slate-600 leading-7; 
+  .type-body {
+    @apply text-sm font-normal text-slate-600 leading-6;
   }
-  .type-button { 
-    @apply text-sm font-bold uppercase tracking-[0.1em]; 
+  .type-button {
+    @apply text-xs font-bold uppercase tracking-[0.1em];
   }
-  .type-label { 
-    @apply text-xs font-bold uppercase tracking-widest text-slate-400;
+  .type-label {
+    @apply text-[10px] font-bold uppercase tracking-widest text-slate-400;
   }
 
   /* Perfect Border Radius Rule */
