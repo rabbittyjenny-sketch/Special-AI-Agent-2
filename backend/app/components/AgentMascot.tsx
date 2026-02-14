@@ -254,7 +254,7 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
   };
 
   return (
-    <div className="relative w-12 h-12 md:w-14 md:h-14">
+    <div className="relative w-14 h-14 md:w-16 md:h-16">
       {/* Glow effect when active */}
       <motion.div
         className="absolute inset-0 rounded-full blur-lg"

@@ -33,10 +33,10 @@ export default function Home() {
 
   return (
     // UNIVERSE CROWN EDITION - 2 COLUMN SYMMETRIC LAYOUT (FIXED LEFT, SCROLLABLE RIGHT)
-    <main className="min-h-screen w-full bg-[#EFF2F9] p-2 md:p-4 lg:p-6 font-sans overflow-x-hidden">
+    <main className="min-h-screen w-full bg-[#EFF2F9] p-4 md:p-6 lg:p-8 font-sans overflow-x-hidden">
 
       <motion.div
-        className="max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4 lg:gap-6 items-start"
+        className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 lg:gap-8 items-start"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -44,7 +44,7 @@ export default function Home() {
 
         {/* LEFT COLUMN: COMMAND CENTER (STICKY) - 5/12 Grid */}
         <motion.section
-          className="lg:col-span-5 hidden lg:block sticky top-4 h-[calc(100vh-2rem)]"
+          className="lg:col-span-5 hidden lg:block sticky top-6 h-[calc(100vh-3rem)]"
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.6 }}
@@ -98,7 +98,7 @@ export default function Home() {
 
         {/* RIGHT COLUMN: DISPLAY PANEL (SCROLLABLE) - 7/12 Grid */}
         <motion.section
-          className="lg:col-span-7 h-[70vh] md:h-[80vh] lg:h-[calc(100vh-2rem)]"
+          className="lg:col-span-7 h-[70vh] md:h-[80vh] lg:h-[calc(100vh-3rem)]"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
@@ -116,12 +116,12 @@ export default function Home() {
 
       {/* FOOTER COPYRIGHT */}
       <motion.footer
-        className="max-w-[1920px] mx-auto mt-4 md:mt-6 pb-3 text-center"
+        className="max-w-[1800px] mx-auto mt-6 md:mt-8 pb-4 text-center px-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.6 }}
       >
-        <p className="text-slate-500 text-xs md:text-sm">
+        <p className="text-slate-500 text-xs md:text-sm leading-relaxed">
           2025 All Rights Reserved. | Curated by <span className="font-semibold text-slate-600">iDEAS365</span> x <span className="font-semibold text-slate-600">Generative AI</span>
         </p>
       </motion.footer>

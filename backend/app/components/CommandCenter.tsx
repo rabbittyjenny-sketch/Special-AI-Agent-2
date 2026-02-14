@@ -61,7 +61,7 @@ export function CommandCenter({
     };
 
     return (
-        <div className="flex flex-col h-full lg:pr-6 gap-5">
+        <div className="flex flex-col h-full lg:pr-6 gap-6">
             {/* 1. Header (H1) */}
             <motion.header
                 className="flex justify-between items-start"
@@ -100,7 +100,7 @@ export function CommandCenter({
             </motion.header>
 
             {/* 2. Agent Grid (Interactive Cards) */}
-            <section className="grid grid-cols-2 gap-3 flex-1 max-h-[320px]">
+            <section className="grid grid-cols-2 gap-4 flex-1 max-h-[380px]">
                 {agentOptions.map((opt, index) => {
                     const hexColor = getHexColor(opt.color);
                     const isActive = currentAgent === opt.value;
@@ -115,9 +115,9 @@ export function CommandCenter({
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-                            whileHover={{ y: -2, scale: 1.01 }}
+                            whileHover={{ y: -3, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`cursor-pointer rounded-[20px] p-4 text-left relative overflow-hidden group flex flex-col justify-between h-full min-h-[110px] ${isActive
+                            className={`cursor-pointer rounded-[22px] p-5 text-left relative overflow-hidden group flex flex-col justify-between h-full min-h-[130px] ${isActive
                                 ? 'bg-[#EFF2F9] shadow-soft-inset ring-2 ring-white/50'
                                 : 'bg-[#EFF2F9] shadow-soft'
                                 }`}
@@ -151,7 +151,7 @@ export function CommandCenter({
                                             initial={{ scale: 0 }}
                                             animate={{ scale: 1 }}
                                             exit={{ scale: 0 }}
-                                            className="w-3 h-3 rounded-full ring-2 ring-[#EFF2F9]"
+                                            className="w-3.5 h-3.5 rounded-full ring-2 ring-[#EFF2F9]"
                                             style={{ backgroundColor: hexColor }}
                                         />
                                     )}
@@ -159,21 +159,21 @@ export function CommandCenter({
                             </div>
 
                             <motion.div
-                                className="mt-2 relative z-10"
+                                className="mt-3 relative z-10"
                                 animate={{
                                     x: isActive ? 2 : 0
                                 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <h3 className={`type-h2 text-sm mb-0.5 transition-colors ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
+                                <h3 className={`type-h2 text-sm md:text-base mb-1 transition-colors ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
                                     {opt.label}
                                 </h3>
-                                <p className="type-label text-[9px] opacity-60">{opt.role}</p>
+                                <p className="type-label text-[9px] md:text-[10px] opacity-60">{opt.role}</p>
                             </motion.div>
 
                             {/* Bottom Border Indicator with Wave Animation */}
                             <motion.div
-                                className="absolute bottom-0 left-0 h-1.5 w-full origin-left"
+                                className="absolute bottom-0 left-0 h-2 w-full origin-left"
                                 style={{ backgroundColor: hexColor }}
                                 initial={{ scaleX: 0 }}
                                 animate={{
@@ -208,12 +208,12 @@ export function CommandCenter({
 
             {/* 3. Input Deck */}
             <motion.section
-                className="mt-auto bg-[#EFF2F9] rounded-[20px] shadow-soft p-4 relative z-10 border border-white/40"
+                className="mt-auto bg-[#EFF2F9] rounded-[22px] shadow-soft p-5 relative z-10 border border-white/40"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7, duration: 0.6 }}
             >
-                <div className="flex justify-between items-center mb-3">
+                <div className="flex justify-between items-center mb-4">
                     <span className="type-label text-slate-500 text-[9px]">INPUT</span>
 
                     <div className="flex items-center gap-2">
@@ -335,10 +335,10 @@ export function CommandCenter({
                         }
                     }}
                     placeholder={`Instruct ${activeAgent?.label}...`}
-                    className="w-full bg-[#EFF2F9] shadow-soft-inset rounded-inner p-3 min-h-[70px] outline-none type-body text-sm resize-none mb-3 placeholder:text-slate-300 focus:ring-2 focus:ring-slate-100 transition-all font-medium"
+                    className="w-full bg-[#EFF2F9] shadow-soft-inset rounded-inner p-4 min-h-[85px] outline-none type-body text-sm resize-none mb-4 placeholder:text-slate-300 focus:ring-2 focus:ring-slate-100 transition-all font-medium"
                 />
 
-                <div className="grid grid-cols-2 gap-3 h-9">
+                <div className="grid grid-cols-2 gap-4 h-10">
                     <motion.button
                         onClick={isRecording ? onToggleRecording : onToggleRecording}
                         disabled={!voiceEnabled}
