@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { CommandCenter } from '@/app/components/CommandCenter';
 import { DisplayPanel } from '@/app/components/DisplayPanel';
 import { useChat } from '@/hooks/useChat';
@@ -34,10 +35,20 @@ export default function Home() {
     // UNIVERSE CROWN EDITION - 2 COLUMN SYMMETRIC LAYOUT (FIXED LEFT, SCROLLABLE RIGHT)
     <main className="min-h-screen w-full bg-[#EFF2F9] p-4 md:p-8 lg:p-12 font-sans overflow-x-hidden">
 
-      <div className="max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
+      <motion.div
+        className="max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
 
         {/* LEFT COLUMN: COMMAND CENTER (STICKY) - 5/12 Grid */}
-        <section className="lg:col-span-5 hidden lg:block sticky top-8 h-[calc(100vh-4rem)]">
+        <motion.section
+          className="lg:col-span-5 hidden lg:block sticky top-8 h-[calc(100vh-4rem)]"
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, duration: 0.6 }}
+        >
           <CommandCenter
             currentAgent={agentType}
             onSelectAgent={setAgentType}
@@ -56,10 +67,15 @@ export default function Home() {
             uploadError={chat.uploadError}
             onRemoveAttachment={chat.removeAttachment}
           />
-        </section>
+        </motion.section>
 
         {/* MOBILE VIEW FOR LEFT COLUMN (Not Sticky on Mobile) */}
-        <section className="lg:hidden col-span-1">
+        <motion.section
+          className="lg:hidden col-span-1"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6 }}
+        >
           <CommandCenter
             currentAgent={agentType}
             onSelectAgent={setAgentType}
@@ -78,10 +94,15 @@ export default function Home() {
             uploadError={chat.uploadError}
             onRemoveAttachment={chat.removeAttachment}
           />
-        </section>
+        </motion.section>
 
         {/* RIGHT COLUMN: DISPLAY PANEL (SCROLLABLE) - 7/12 Grid */}
-        <section className="lg:col-span-7 h-[70vh] md:h-[80vh] lg:h-[calc(100vh-4rem)]">
+        <motion.section
+          className="lg:col-span-7 h-[70vh] md:h-[80vh] lg:h-[calc(100vh-4rem)]"
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+        >
           <DisplayPanel
             currentAgent={agentType}
             messages={chat.messages}
@@ -89,16 +110,21 @@ export default function Home() {
             // @ts-ignore
             messagesEndRef={chat.messagesEndRef}
           />
-        </section>
+        </motion.section>
 
-      </div>
+      </motion.div>
 
       {/* FOOTER COPYRIGHT */}
-      <footer className="max-w-[1920px] mx-auto mt-8 md:mt-12 pb-6 text-center">
+      <motion.footer
+        className="max-w-[1920px] mx-auto mt-8 md:mt-12 pb-6 text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8, duration: 0.6 }}
+      >
         <p className="text-slate-500 text-sm md:text-base">
           2025 All Rights Reserved. | Curated by <span className="font-semibold text-slate-600">iDEAS365</span> x <span className="font-semibold text-slate-600">Generative AI</span>
         </p>
-      </footer>
+      </motion.footer>
     </main>
   );
 }
