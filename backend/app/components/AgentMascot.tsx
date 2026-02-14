@@ -60,23 +60,11 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
     hover: {
       scale: 1.1,
       rotate: [0, -5, 5, -5, 0],
-      y: -5,
-      transition: {
-        rotate: {
-          duration: 0.5,
-          repeat: Infinity,
-          repeatDelay: 1
-        },
-        scale: { duration: 0.3 },
-        y: { duration: 0.3 }
-      }
+      y: -5
     },
     active: {
       scale: 1.05,
-      y: -3,
-      transition: {
-        duration: 0.3
-      }
+      y: -3
     }
   };
 
@@ -86,14 +74,7 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
     },
     active: {
       opacity: 0.6,
-      scale: [1, 1.2, 1],
-      transition: {
-        scale: {
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }
-      }
+      scale: [1, 1.2, 1]
     }
   };
 
@@ -104,12 +85,7 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
     },
     hover: {
       scale: [1, 1.2, 1],
-      rotate: [0, 10, -10, 0],
-      transition: {
-        duration: 0.6,
-        repeat: Infinity,
-        repeatDelay: 1.5
-      }
+      rotate: [0, 10, -10, 0]
     }
   };
 
@@ -144,6 +120,12 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
               fontSize="16"
               textAnchor="middle"
               variants={faceVariants}
+              animate={isHovered ? "hover" : "idle"}
+              transition={{
+                duration: 0.6,
+                repeat: isHovered ? Infinity : 0,
+                repeatDelay: 1.5
+              }}
             >
               {config.face}
             </motion.text>
@@ -176,6 +158,12 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
               fontSize="18"
               textAnchor="middle"
               variants={faceVariants}
+              animate={isHovered ? "hover" : "idle"}
+              transition={{
+                duration: 0.6,
+                repeat: isHovered ? Infinity : 0,
+                repeatDelay: 1.5
+              }}
             >
               {config.face}
             </motion.text>
@@ -208,6 +196,12 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
               fontSize="16"
               textAnchor="middle"
               variants={faceVariants}
+              animate={isHovered ? "hover" : "idle"}
+              transition={{
+                duration: 0.6,
+                repeat: isHovered ? Infinity : 0,
+                repeatDelay: 1.5
+              }}
             >
               {config.face}
             </motion.text>
@@ -242,6 +236,12 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
               fontSize="16"
               textAnchor="middle"
               variants={faceVariants}
+              animate={isHovered ? "hover" : "idle"}
+              transition={{
+                duration: 0.6,
+                repeat: isHovered ? Infinity : 0,
+                repeatDelay: 1.5
+              }}
             >
               {config.face}
             </motion.text>
@@ -262,6 +262,13 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
         variants={glowVariants}
         initial="idle"
         animate={isActive ? "active" : "idle"}
+        transition={{
+          scale: {
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }
+        }}
       />
 
       {/* Main mascot */}
@@ -270,6 +277,19 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
         variants={containerVariants}
         initial="idle"
         animate={isActive ? "active" : isHovered ? "hover" : "idle"}
+        transition={
+          isHovered
+            ? {
+                rotate: {
+                  duration: 0.5,
+                  repeat: Infinity,
+                  repeatDelay: 1
+                },
+                scale: { duration: 0.3 },
+                y: { duration: 0.3 }
+              }
+            : { duration: 0.3 }
+        }
       >
         {renderShape()}
       </motion.div>
