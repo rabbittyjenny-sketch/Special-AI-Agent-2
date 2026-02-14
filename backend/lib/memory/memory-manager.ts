@@ -6,13 +6,14 @@ import { AgentMemory } from '../types.js';
 const sql = neon(process.env.DATABASE_URL!);
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-// ✅ Get user memory
+// ✅ Get user memory (Fixed to match schema 'user_memory')
 export async function getUserMemory(
     userId: string,
     agentType: string
 ): Promise<AgentMemory> {
     const result = await sql`
-    SELECT memory_data FROM agent_memory
+    SELECT preferences, learned_patterns, interaction_count 
+    FROM user_memory
     WHERE user_id = ${userId} AND agent_type = ${agentType}
   `;
 
@@ -20,7 +21,16 @@ export async function getUserMemory(
         return getDefaultMemory(userId, agentType);
     }
 
-    return result[0].memory_data as AgentMemory;
+    const row = result[0];
+    return {
+        userId,
+        agentType,
+        preferences: row.preferences || { outputStyle: 'concise', tone: 'professional' },
+        patterns: row.learned_patterns || [],
+        lessonsLearned: [], // Not in current schema, defaulting to empty
+        verificationRules: [], // Not in current schema, defaulting to empty
+        updatedAt: new Date().toISOString()
+    } as AgentMemory;
 }
 
 // ✅ Learn from interaction (Async)
@@ -51,7 +61,8 @@ Extract JSON Only:
 {
   "preferenceSignals": { "outputStyle": "concise|detailed|null" },
   "newPattern": "one sentence description or null"
-}`
+}
+`
         }]
     });
 
@@ -75,12 +86,23 @@ Extract JSON Only:
             });
         }
 
-        // Save back to Neon
+        // Save back to Neon (Fixed table user_memory)
         await sql`
-      INSERT INTO agent_memory (user_id, agent_type, memory_data, updated_at)
-      VALUES (${userId}, ${agentType}, ${JSON.stringify(memory)}, NOW())
+      INSERT INTO user_memory (user_id, agent_type, preferences, learned_patterns, interaction_count, updated_at)
+      VALUES (
+        ${userId}, 
+        ${agentType}, 
+        ${JSON.stringify(memory.preferences)}, 
+        ${JSON.stringify(memory.patterns)}, 
+        ${(memory.interactionCount || 0) + 1},
+        NOW()
+      )
       ON CONFLICT (user_id, agent_type)
-      DO UPDATE SET memory_data = ${JSON.stringify(memory)}, updated_at = NOW()
+      DO UPDATE SET 
+        preferences = ${JSON.stringify(memory.preferences)}, 
+        learned_patterns = ${JSON.stringify(memory.patterns)},
+        interaction_count = user_memory.interaction_count + 1,
+        updated_at = NOW()
     `;
     } catch (e) {
         console.error("Learning Error:", e);

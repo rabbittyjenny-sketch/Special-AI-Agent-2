@@ -2,7 +2,7 @@
 import { pgTable, uuid, varchar, text, jsonb, timestamp, integer, boolean, decimal, unique, index, pgEnum } from 'drizzle-orm/pg-core';
 
 // --- Enums ---
-export const agentTypeEnum = pgEnum('agent_type', ['design', 'analyst', 'coder', 'marketing']);
+export const agentTypeEnum = pgEnum('agent_type', ['design', 'analyst', 'coder', 'marketing', 'orchestrator']);
 export const conversationStatusEnum = pgEnum('conversation_status', ['active', 'completed', 'failed', 'archived']);
 export const messageRoleEnum = pgEnum('message_role', ['user', 'assistant', 'system', 'tool']);
 export const toolStatusEnum = pgEnum('tool_status', ['pending', 'running', 'success', 'failed', 'timeout']);
@@ -106,7 +106,7 @@ export const mcpToolCalls = pgTable('mcp_tool_calls', {
     completedAt: timestamp('completed_at', { withTimezone: true }),
 });
 
-// --- Attachments (Phase 2: Enhanced with Cloud Storage & Vision API) ---
+// --- Attachments ---
 export const attachments = pgTable('attachments', {
     id: uuid('id').defaultRandom().primaryKey(),
     messageId: uuid('message_id').references(() => messages.id, { onDelete: 'cascade' }),
@@ -114,70 +114,61 @@ export const attachments = pgTable('attachments', {
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
     filename: varchar('filename', { length: 255 }).notNull(),
     mimeType: varchar('mime_type', { length: 50 }).notNull(),
-    size: integer('size').notNull(), // in bytes
-    url: text('url').notNull(), // public URL or storage path
-    storageKey: varchar('storage_key', { length: 255 }), // R2/S3 storage key (Phase 2)
-    publicUrl: text('public_url'), // CDN public URL (Phase 2)
-    metadata: jsonb('metadata').default({}), // width, height, format, etc
-    visionAnalysis: jsonb('vision_analysis'), // Claude Vision API results (Phase 2)
+    size: integer('size').notNull(),
+    url: text('url').notNull(),
+    storageKey: varchar('storage_key', { length: 255 }),
+    publicUrl: text('public_url'),
+    metadata: jsonb('metadata').default({}),
+    visionAnalysis: jsonb('vision_analysis'),
     uploadedAt: timestamp('uploaded_at', { withTimezone: true }).defaultNow(),
-    analyzedAt: timestamp('analyzed_at', { withTimezone: true }), // When vision analysis completed (Phase 2)
+    analyzedAt: timestamp('analyzed_at', { withTimezone: true }),
 }, (table) => {
     return {
         convIdIdx: index('idx_attachments_conversation_id').on(table.conversationId),
         userIdIdx: index('idx_attachments_user_id').on(table.userId),
         messageIdIdx: index('idx_attachments_message_id').on(table.messageId),
-        storageKeyIdx: index('idx_attachments_storage_key').on(table.storageKey), // Phase 2: Fast lookup by storage key
     };
 });
 
-// --- Image Analyses (Phase 2: Vision API Analysis Results) ---
+// --- Image Analyses (RESTORED MISSING TABLE) ---
 export const imageAnalyses = pgTable('image_analyses', {
     id: uuid('id').defaultRandom().primaryKey(),
     attachmentId: uuid('attachment_id').references(() => attachments.id, { onDelete: 'cascade' }).notNull(),
     agentType: agentTypeEnum('agent_type').notNull(),
-    analysis: text('analysis').notNull(), // Full analysis text
-    summary: text('summary'), // Condensed summary
-    detectedType: varchar('detected_type', { length: 50 }), // design, data, code, other
-    confidence: decimal('confidence', { precision: 3, scale: 2 }).default('0.00'), // 0-100 confidence score
-    keyPoints: jsonb('key_points').default([]), // Array of key insights
-    metadata: jsonb('metadata').default({}), // Additional metadata
+    analysis: text('analysis').notNull(),
+    summary: text('summary'),
+    detectedType: varchar('detected_type', { length: 50 }),
+    confidence: decimal('confidence', { precision: 5, scale: 2 }),
+    keyPoints: jsonb('key_points').default([]),
+    metadata: jsonb('metadata').default({}),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => {
     return {
-        attachmentIdIdx: index('idx_image_analyses_attachment_id').on(table.attachmentId),
-        agentTypeIdx: index('idx_image_analyses_agent_type').on(table.agentType),
+        attIdIdx: index('idx_image_analyses_attachment_id').on(table.attachmentId),
     };
 });
 
-// --- Knowledge Base ---
+// --- Knowledge Base (RESTORED MISSING COLUMNS) ---
 export const knowledgeBase = pgTable('knowledge_base', {
     id: uuid('id').defaultRandom().primaryKey(),
-    agentType: agentTypeEnum('agent_type').notNull(),
-    sourceType: varchar('source_type', { length: 50 }).notNull(), // Changed to varchar to match user snippet preference
-    sourceId: varchar('source_id', { length: 255 }),
+    agentType: agentTypeEnum('agent_type'), // Restored
+    sourceType: varchar('source_type', { length: 50 }), // Restored
+    sourceId: varchar('source_id', { length: 255 }), // Restored
     category: varchar('category', { length: 100 }),
-    key: varchar('key', { length: 255 }).notNull(),
-    value: text('value').notNull(),
+    title: varchar('title', { length: 255 }), // Mapped to 'key' in Logic
+    content: text('content').notNull(),      // Mapped to 'value' in Logic
+    key: varchar('key', { length: 255 }),    // Restored for direct mapping if needed
+    value: text('value'),                    // Restored for direct mapping if needed
+    isActive: boolean('is_active').default(true), // Restored
+    syncedAt: timestamp('synced_at', { withTimezone: true }), // Restored
     metadata: jsonb('metadata').default({}),
-    isActive: boolean('is_active').default(true), // ✅ boolean imported correctly
-    syncedAt: timestamp('synced_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
-
-// --- Metrics ---
-export const agentMetrics = pgTable('agent_metrics', {
-    id: uuid('id').defaultRandom().primaryKey(),
-    agentType: agentTypeEnum('agent_type').notNull(),
-    conversationId: uuid('conversation_id').references(() => conversations.id, { onDelete: 'cascade' }),
-    metricName: varchar('metric_name', { length: 100 }).notNull(),
-    metricValue: decimal('metric_value', { precision: 10, scale: 2 }).notNull(),
-    metadata: jsonb('metadata').default({}),
-    recordedAt: timestamp('recorded_at', { withTimezone: true }).defaultNow(),
 }, (table) => {
     return {
-        agentTypeIdx: index('idx_metrics_agent_type').on(table.agentType),
+        agentTypeIdx: index('idx_kb_agent_type').on(table.agentType),
+        categoryIdx: index('idx_kb_category').on(table.category),
+        searchIdx: index('idx_kb_search').on(table.title),
     };
 });
 
@@ -185,44 +176,44 @@ export const agentMetrics = pgTable('agent_metrics', {
 export const agentConfigs = pgTable('agent_configs', {
     id: uuid('id').defaultRandom().primaryKey(),
     agentType: agentTypeEnum('agent_type').notNull().unique(),
-    modelVersion: varchar('model_version', { length: 100 }).default('claude-sonnet-4-20250514'),
     systemPrompt: text('system_prompt').notNull(),
-    maxTokens: integer('max_tokens').default(4096),
-    temperature: decimal('temperature', { precision: 3, scale: 2 }).default('1.00'),
-    availableTools: jsonb('available_tools').notNull().default([]),
-    isActive: boolean('is_active').default(true),
+    capabilities: jsonb('capabilities').default({}),
+    performanceTargets: jsonb('performance_targets').default({}),
+    active: boolean('active').default(true),
+    version: varchar('version', { length: 20 }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-// --- Error Logs (Added missing table from index migration) ---
-export const errorLogs = pgTable('error_logs', {
+// --- Error Analysis Logs ---
+export const errorAnalysisLogs = pgTable('error_analysis_logs', {
     id: uuid('id').defaultRandom().primaryKey(),
-    agentType: agentTypeEnum('agent_type'),
     conversationId: uuid('conversation_id').references(() => conversations.id),
-    errorType: varchar('error_type', { length: 100 }),
-    errorMessage: text('error_message'),
-    errorStack: text('error_stack'),
-    severity: varchar('severity', { length: 20 }).default('error'),
-    context: jsonb('context').default({}),
+    agentType: agentTypeEnum('agent_type'),
+    issueDescription: text('issue_description'),
+    rootCause: text('root_cause'),
+    suggestedFixes: jsonb('suggested_fixes'),
+    userDecision: varchar('user_decision', { length: 100 }),
     resolved: boolean('resolved').default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-// --- Agent Memory ---
-export const agentMemory = pgTable('agent_memory', {
+// --- User Memory ---
+export const userMemory = pgTable('user_memory', {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    userId: varchar('user_id', { length: 255 }).notNull(),
     agentType: agentTypeEnum('agent_type').notNull(),
-    memoryData: jsonb('memory_data').notNull().default({}),
+    preferences: jsonb('preferences').default({}),
+    learnedPatterns: jsonb('learned_patterns').default([]),
+    interactionCount: integer('interaction_count').default(0),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => {
     return {
-        uniqueUserAgent: unique('idx_agent_memory_user_agent').on(table.userId, table.agentType),
+        uniqueUserAgent: unique('idx_user_memory_user_agent').on(table.userId, table.agentType),
     };
 });
 
 export type KnowledgeBase = typeof knowledgeBase.$inferSelect;
-export type AgentMemory = typeof agentMemory.$inferSelect;
+export type UserMemory = typeof userMemory.$inferSelect;
 export type Attachment = typeof attachments.$inferSelect;
 export type ImageAnalysis = typeof imageAnalyses.$inferSelect;

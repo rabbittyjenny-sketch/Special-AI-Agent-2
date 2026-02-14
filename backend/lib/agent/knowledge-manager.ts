@@ -1,7 +1,8 @@
+
 import { Redis } from '@upstash/redis';
 import { neon } from '@neondatabase/serverless';
 import { AgentType, DataSourceType } from './boundaries';
-import { AGENT_BOUNDARIES, hasAuthority } from './boundaries';
+import { hasAuthority } from './boundaries';
 import Anthropic from '@anthropic-ai/sdk';
 
 const redis = new Redis({
@@ -75,7 +76,7 @@ export async function queryKnowledgeBase(
       return cached.slice(offset, offset + limit);
     }
 
-    // Build query
+    // ✅ Build query using REAL columns (Restored by User)
     let query = `
       SELECT id, agent_type, source_type, category, key, value, metadata,
              is_active, synced_at, created_at, updated_at
@@ -108,7 +109,8 @@ export async function queryKnowledgeBase(
     }
 
     if (search) {
-      query += ` AND (key ILIKE $${paramIndex} OR value ILIKE $${paramIndex})`;
+      // Search in both key/value (Primary) AND title/content (Secondary/Legacy)
+      query += ` AND (key ILIKE $${paramIndex} OR value ILIKE $${paramIndex} OR title ILIKE $${paramIndex} OR content ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
       paramIndex++;
     }
@@ -123,8 +125,8 @@ export async function queryKnowledgeBase(
       agentType: row.agent_type,
       sourceType: row.source_type,
       category: row.category,
-      key: row.key,
-      value: row.value,
+      key: row.key || row.title,       // Prefer Key, Fallback to Title
+      value: row.value || row.content, // Prefer Value, Fallback to Content
       metadata: row.metadata,
       isActive: row.is_active,
       syncedAt: row.synced_at,
@@ -197,8 +199,9 @@ Format: comma-separated list of keys, nothing else.
       messages: [{ role: 'user', content: similarityPrompt }],
     });
 
+    const content = response.content[0];
     const similarKeys = (
-      response.content[0].type === 'text' ? response.content[0].text : ''
+      content.type === 'text' ? content.text : ''
     )
       .split(',')
       .map(k => k.trim())
@@ -346,163 +349,6 @@ export async function invalidateKBCache(agent: AgentType): Promise<void> {
   }
 }
 
-/**
- * Add KB entry to knowledge base
- */
-export async function addKBEntry(entry: Omit<KnowledgeEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<KnowledgeEntry> {
-  try {
-    // Validate agent can add to this source
-    const access = validateAgentAccess(entry.agentType, entry.sourceType);
-    if (!access.allowed) {
-      throw new Error(`Agent cannot add entries to ${entry.sourceType}`);
-    }
-
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-
-    await sql(
-      `
-      INSERT INTO knowledge_base
-      (id, agent_type, source_type, source_id, category, key, value, metadata, is_active, synced_at, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-    `,
-      [
-        id,
-        entry.agentType,
-        entry.sourceType,
-        entry.metadata?.sourceId || null,
-        entry.category,
-        entry.key,
-        entry.value,
-        JSON.stringify(entry.metadata || {}),
-        entry.isActive ?? true,
-        now,
-        now,
-        now,
-      ]
-    );
-
-    // Invalidate cache
-    await invalidateKBCache(entry.agentType);
-
-    return {
-      ...entry,
-      id,
-      createdAt: now,
-      updatedAt: now,
-    };
-  } catch (error) {
-    console.error('Add KB Entry Error:', error);
-    throw error;
-  }
-}
-
-/**
- * Update KB entry
- */
-export async function updateKBEntry(
-  id: string,
-  updates: Partial<Omit<KnowledgeEntry, 'id' | 'createdAt'>>
-): Promise<KnowledgeEntry | null> {
-  try {
-    const now = new Date().toISOString();
-
-    // Build update query dynamically
-    const fields = [];
-    const values = [];
-    let paramIndex = 1;
-
-    if (updates.value !== undefined) {
-      fields.push(`value = $${paramIndex++}`);
-      values.push(updates.value);
-    }
-
-    if (updates.category !== undefined) {
-      fields.push(`category = $${paramIndex++}`);
-      values.push(updates.category);
-    }
-
-    if (updates.metadata !== undefined) {
-      fields.push(`metadata = $${paramIndex++}`);
-      values.push(JSON.stringify(updates.metadata));
-    }
-
-    if (updates.isActive !== undefined) {
-      fields.push(`is_active = $${paramIndex++}`);
-      values.push(updates.isActive);
-    }
-
-    fields.push(`updated_at = $${paramIndex++}`);
-    values.push(now);
-
-    values.push(id);
-
-    const result = await sql(
-      `
-      UPDATE knowledge_base
-      SET ${fields.join(', ')}
-      WHERE id = $${paramIndex}
-      RETURNING *
-    `,
-      values
-    );
-
-    if (result.length === 0) {
-      return null;
-    }
-
-    const row = result[0];
-
-    // Invalidate cache for this agent
-    if (row.agent_type) {
-      await invalidateKBCache(row.agent_type);
-    }
-
-    return {
-      id: row.id,
-      agentType: row.agent_type,
-      sourceType: row.source_type,
-      category: row.category,
-      key: row.key,
-      value: row.value,
-      metadata: row.metadata,
-      isActive: row.is_active,
-      syncedAt: row.synced_at,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
-  } catch (error) {
-    console.error('Update KB Entry Error:', error);
-    throw error;
-  }
-}
-
-/**
- * Delete KB entry (soft delete)
- */
-export async function deleteKBEntry(id: string): Promise<boolean> {
-  try {
-    const result = await sql(
-      `
-      UPDATE knowledge_base
-      SET is_active = false, updated_at = NOW()
-      WHERE id = $1
-      RETURNING agent_type
-    `,
-      [id]
-    );
-
-    if (result.length > 0) {
-      await invalidateKBCache(result[0].agent_type);
-      return true;
-    }
-
-    return false;
-  } catch (error) {
-    console.error('Delete KB Entry Error:', error);
-    return false;
-  }
-}
 
 /**
  * Get KB statistics for an agent
