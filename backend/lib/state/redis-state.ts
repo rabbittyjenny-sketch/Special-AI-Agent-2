@@ -42,8 +42,8 @@ export async function getHotState(conversationId: string): Promise<HotState | nu
     return cached;
 }
 
-// ✅ Save hot state (with TTL 1 hour)
-export async function saveHotState(state: HotState, ttl: number = 3600) {
+// ✅ Save hot state (with TTL 24 hours - increased from 1 hour)
+export async function saveHotState(state: HotState, ttl: number = 86400) {
     const key = `conv:${state.conversationId}`;
     state.metadata.lastMessageAt = new Date().toISOString();
     state.metadata.messageCount = state.messages.length;

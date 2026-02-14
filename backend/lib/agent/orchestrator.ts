@@ -253,8 +253,8 @@ export async function processAgentRequest(
     console.warn("MCP Connection Failed (running without tools):", e);
   }
 
-  // 5. Call Claude with context
-  const contextWindow = state.messages.slice(-10);
+  // 5. Call Claude with context (increased from 10 to 20 messages)
+  const contextWindow = state.messages.slice(-20);
 
   let assistantResponse: string = "";
   let confidence: number = 0;
