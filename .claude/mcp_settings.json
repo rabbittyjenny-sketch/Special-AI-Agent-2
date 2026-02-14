@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "chat-history": {
+      "command": "node",
+      "args": ["./mcp-servers/chat-history-server.js"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    },
+    "filesystem": {
+      "command": "node",
+      "args": ["./mcp-servers/filesystem-server.js"],
+      "env": {
+        "ALLOWED_DIRECTORIES": "./backend,./mcp-servers"
+      }
+    }
+  }
+}
