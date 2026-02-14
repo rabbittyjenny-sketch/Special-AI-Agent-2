@@ -279,7 +279,45 @@ export async function processAgentRequest(
     }
 
     // Fetch all attachments with base64 data in one query
-    const hydratedAttachments = await getAttachmentsByIds(allAttachmentIds);
+    const attachmentRecords = await getAttachmentsByIds(allAttachmentIds);
+
+    // 🔥 Hydrate base64 from S3 if not in metadata
+    const hydratedAttachments = await Promise.all(
+      attachmentRecords.map(async (att) => {
+        // If already has base64, return as-is
+        if (att.metadata?.base64) {
+          return att;
+        }
+
+        // Download base64 from S3/public URL
+        if (att.publicUrl || att.url) {
+          try {
+            const imageUrl = att.publicUrl || att.url;
+            const response = await fetch(imageUrl);
+
+            if (response.ok) {
+              const buffer = await response.arrayBuffer();
+              const base64 = Buffer.from(buffer).toString('base64');
+
+              return {
+                ...att,
+                metadata: {
+                  ...att.metadata,
+                  base64
+                }
+              };
+            } else {
+              console.warn(`Failed to fetch image ${att.id}: ${response.status}`);
+            }
+          } catch (error) {
+            console.warn(`Failed to download image ${att.id}:`, error);
+          }
+        }
+
+        return att; // Return without base64 if download failed
+      })
+    );
+
     const attachmentMap = new Map(hydratedAttachments.map(att => [att.id, att]));
 
     // Retry loop (max 2 attempts)

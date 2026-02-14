@@ -1,6 +1,7 @@
 
 import { Redis } from '@upstash/redis';
 import { Message } from '../types.js';
+import { persistConversationToDB, loadConversationFromDB } from './db-persistence';
 
 export const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -36,22 +37,43 @@ export interface HotState {
     };
 }
 
-// ✅ Get hot state (with smart caching)
+// ✅ Get hot state (with smart caching + database fallback)
 export async function getHotState(conversationId: string): Promise<HotState | null> {
+    // Try Redis first (hot cache)
     const cached = await redis.get<HotState>(`conv:${conversationId}`);
-    return cached;
+    if (cached) {
+        console.log(`⚡ Loaded from Redis: ${conversationId}`);
+        return cached;
+    }
+
+    // 🔥 Fallback to database if Redis expired
+    console.log(`🔄 Redis miss, checking database: ${conversationId}`);
+    const fromDB = await loadConversationFromDB(conversationId);
+
+    if (fromDB) {
+        // Re-populate Redis cache with longer TTL
+        await redis.setex(`conv:${conversationId}`, 86400, fromDB);
+        console.log(`📖 Loaded from DB and cached: ${conversationId}`);
+        return fromDB;
+    }
+
+    console.log(`📭 No conversation found: ${conversationId}`);
+    return null;
 }
 
-// ✅ Save hot state (with TTL 24 hours - increased from 1 hour)
+// ✅ Save hot state (with TTL 24 hours + database persistence)
 export async function saveHotState(state: HotState, ttl: number = 86400) {
     const key = `conv:${state.conversationId}`;
     state.metadata.lastMessageAt = new Date().toISOString();
     state.metadata.messageCount = state.messages.length;
 
+    // Save to Redis (hot cache)
     await redis.setex(key, ttl, state);
 
-    // 🔥 Queue for DB sync (background job)
-    await queueDBSync(state.conversationId);
+    // 🔥 Also persist to database (async, non-blocking)
+    persistConversationToDB(state).catch(err => {
+        console.error('DB persistence failed (non-critical):', err);
+    });
 }
 
 // ✅ Add message (atomic operation)
