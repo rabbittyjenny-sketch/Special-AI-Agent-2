@@ -37,8 +37,24 @@ export function useChat() {
     const [uploadError, setUploadError] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Initialize conversationId from localStorage or create new
     useEffect(() => {
-        setConversationId(crypto.randomUUID());
+        // Try to load existing conversationId from localStorage
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('conversationId') : null;
+
+        if (stored) {
+            // Resume existing conversation
+            console.log('📝 Resuming conversation:', stored);
+            setConversationId(stored);
+        } else {
+            // Create new conversation
+            const newId = crypto.randomUUID();
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('conversationId', newId);
+            }
+            console.log('🆕 New conversation:', newId);
+            setConversationId(newId);
+        }
     }, []);
 
     useEffect(() => {
@@ -147,6 +163,19 @@ export function useChat() {
         }
     }, [input, conversationId, attachments]);
 
+    // Start a new conversation (clear localStorage and reset state)
+    const startNewConversation = useCallback(() => {
+        const newId = crypto.randomUUID();
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('conversationId', newId);
+        }
+        console.log('🔄 Starting new conversation:', newId);
+        setConversationId(newId);
+        setMessages([]);
+        setAttachments([]);
+        setInput('');
+    }, []);
+
     return {
         messages,
         input,
@@ -158,6 +187,8 @@ export function useChat() {
         isUploading,
         uploadError,
         handleUpload,
-        removeAttachment
+        removeAttachment,
+        startNewConversation,
+        conversationId
     };
 }

@@ -1,0 +1,23 @@
+{
+  "name": "special-ai-agent-mcp-servers",
+  "version": "1.0.0",
+  "description": "MCP Servers for Special AI Agent system",
+  "main": "index.js",
+  "scripts": {
+    "start:chat": "node chat-history-server.js",
+    "start:fs": "node filesystem-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "chat",
+    "filesystem"
+  ],
+  "author": "iDEAS365",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0"
+  }
+}
