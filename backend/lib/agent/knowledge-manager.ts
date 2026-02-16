@@ -349,6 +349,64 @@ export async function invalidateKBCache(agent: AgentType): Promise<void> {
   }
 }
 
+/**
+ * Add new entry to Knowledge Base
+ * Creates a new KB entry and invalidates relevant caches
+ */
+export async function addKBEntry(
+  entry: Omit<KnowledgeEntry, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<KnowledgeEntry> {
+  try {
+    const result = await sql(
+      `
+      INSERT INTO knowledge_base
+      (agent_type, source_type, category, key, value, metadata, is_active, synced_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+      `,
+      [
+        entry.agentType,
+        entry.sourceType,
+        entry.category,
+        entry.key,
+        entry.value,
+        JSON.stringify(entry.metadata || {}),
+        entry.isActive !== false, // Default to true
+        entry.syncedAt || new Date().toISOString(),
+      ]
+    );
+
+    if (result.length === 0) {
+      throw new Error('Failed to create KB entry');
+    }
+
+    const row = result[0];
+    const createdEntry: KnowledgeEntry = {
+      id: row.id,
+      agentType: row.agent_type,
+      sourceType: row.source_type,
+      category: row.category,
+      key: row.key,
+      value: row.value,
+      metadata: row.metadata || {},
+      isActive: row.is_active,
+      syncedAt: row.synced_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+
+    // Invalidate cache
+    await invalidateKBCache(entry.agentType);
+
+    console.log(`✅ Created KB entry: ${createdEntry.id} (${entry.agentType}/${entry.category}/${entry.key})`);
+
+    return createdEntry;
+  } catch (error) {
+    console.error('Failed to add KB entry:', error);
+    throw error;
+  }
+}
+
 
 /**
  * Get KB statistics for an agent
