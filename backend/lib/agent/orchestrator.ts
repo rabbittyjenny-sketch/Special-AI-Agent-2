@@ -97,6 +97,7 @@ function buildVisionContent(
 
     // Add image (now with real base64 or storage URL)
     // Note: The attachment should already have base64 data or valid URL
+    const metadata = att.metadata as Record<string, any> | undefined;
     content.push({
       type: 'image',
       source: {
@@ -104,7 +105,7 @@ function buildVisionContent(
         media_type: att.mimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
         // In Phase 2, this should be actual base64 data, not placeholder
         // Extract from metadata or use empty string as fallback
-        data: (att.metadata?.base64 as string) || 'placeholder-base64-data',
+        data: (metadata?.base64 as string) || 'placeholder-base64-data',
       } as any, // Type assertion needed due to Anthropic SDK limitations
     });
   }
@@ -141,8 +142,9 @@ async function processAttachmentsWithVision(
       }
 
       // Analyze with vision API
+      const metadata = att.metadata as Record<string, any> | undefined;
       const analysis = await analyzeImageWithVision(
-        att.metadata?.base64 || att.url,
+        metadata?.base64 || att.url,
         att.mimeType,
         agentType as any,
         'Analyze this image in detail'
@@ -284,8 +286,11 @@ export async function processAgentRequest(
     // 🔥 Hydrate base64 from S3 if not in metadata
     const hydratedAttachments = await Promise.all(
       attachmentRecords.map(async (att) => {
+        // Type guard for metadata
+        const metadata = att.metadata as Record<string, any> | undefined;
+
         // If already has base64, return as-is
-        if (att.metadata?.base64) {
+        if (metadata?.base64) {
           return att;
         }
 
@@ -302,9 +307,9 @@ export async function processAgentRequest(
               return {
                 ...att,
                 metadata: {
-                  ...att.metadata,
+                  ...(metadata || {}),
                   base64
-                }
+                } as Record<string, any>
               };
             } else {
               console.warn(`Failed to fetch image ${att.id}: ${response.status}`);

@@ -65,6 +65,7 @@ export interface AgentMemory {
         applied: boolean;
     }>;
     verificationRules: string[]; // Custom rules ต่อ user
+    interactionCount?: number; // Total number of interactions with this agent
 }
 
 export interface VerificationResult {
