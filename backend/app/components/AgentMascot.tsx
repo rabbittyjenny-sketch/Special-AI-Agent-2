@@ -11,29 +11,29 @@ interface AgentMascotProps {
 export function AgentMascot({ agentId, isActive = false, isHovered = false }: AgentMascotProps) {
   const getMascotConfig = () => {
     switch (agentId) {
-      case 'code-specialist':
+      case 'coder':
         return {
           image: 'https://ik.imagekit.io/ideas365logo/1770350699364(1).png?updatedAt=1771193412500',
           color: '#5E9BEB',
           name: 'Code Specialist'
         };
-      case 'creative-director':
+      case 'design':
         return {
           image: 'https://ik.imagekit.io/ideas365logo/1770350880742(1).png?updatedAt=1771193408730',
           color: '#EB5463',
           name: 'Creative Director'
         };
-      case 'data-strategist':
+      case 'analyst':
         return {
           image: 'https://ik.imagekit.io/ideas365logo/1770351112298(1).png?updatedAt=1771193406879',
           color: '#FFCE55',
           name: 'Data Strategist'
         };
-      case 'growth-hacker':
+      case 'marketing':
         return {
           image: 'https://ik.imagekit.io/ideas365logo/1770350711413(3).png?updatedAt=1771193407768',
           color: '#9FD369',
-          name: 'Growth Hacker'
+          name: 'Marketing & Content Planner'
         };
       case 'orchestrator':
         return {
@@ -111,7 +111,7 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
   };
 
   return (
-    <div className="relative w-14 h-14 md:w-16 md:h-16">
+    <div className="relative w-10 h-10 sm:w-12 sm:h-12">
       {/* Glow effect when active */}
       <motion.div
         className="absolute inset-0 rounded-full blur-lg"

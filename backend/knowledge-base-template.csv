@@ -1,0 +1,12 @@
+agent_type,source_type,category,key,value,metadata,is_active
+design,manual,brand_voice,iDEAS365 Tone - Creative,"Use energetic and inspiring language. Focus on possibilities and creative solutions. Example: 'Let's make this amazing! 🎨'","{""priority"": ""high""}",true
+design,manual,techniques,Visual Hierarchy Principles,"1. Size matters - larger = more important. 2. Contrast creates focus. 3. Whitespace enhances readability. 4. Alignment guides the eye.","{""difficulty"": ""intermediate""}",true
+design,manual,best_practices,Logo Design Process,"1. Research brand values. 2. Sketch multiple concepts. 3. Refine top 3 ideas. 4. Present with mockups. 5. Iterate based on feedback.","{""time_estimate"": ""2-3 weeks""}",true
+coder,manual,best_practices,Code Review Checklist,"1. Does it solve the problem? 2. Is it readable? 3. Are edge cases covered? 4. Are tests included? 5. Is documentation updated?","{""priority"": ""high""}",true
+coder,manual,techniques,Error Handling Strategy,"Use try-catch for expected errors. Log with context. Return user-friendly messages. Monitor error rates. Have fallback plans.","{""language"": ""general""}",true
+analyst,manual,best_practices,Data Visualization Principles,"1. Choose right chart type. 2. Label clearly. 3. Use consistent colors. 4. Show trends, not just data. 5. Tell a story.","{""tools"": [""Tableau"", ""PowerBI""]}",true
+analyst,manual,techniques,A/B Testing Framework,"1. Define hypothesis. 2. Set sample size. 3. Random assignment. 4. Run for statistical significance. 5. Analyze with confidence intervals.","{""min_sample"": ""1000""}",true
+marketing,manual,brand_voice,iDEAS365 Tone - Growth,"Focus on results and actionable insights. Use data-driven language. Example: 'Our analysis shows 3 key opportunities to increase engagement by 40%.'","{""tone"": ""professional""}",true
+marketing,manual,techniques,Content Marketing Funnel,"Awareness (Blog posts, Social). Consideration (Case studies, Webinars). Decision (Free trial, Demo). Retention (Onboarding, Support).","{""channels"": [""social"", ""email"", ""blog""]}",true
+marketing,manual,best_practices,SEO Optimization Checklist,"1. Keyword research. 2. On-page SEO (title, meta, headers). 3. Quality content. 4. Internal linking. 5. Page speed. 6. Mobile-friendly.","{""priority"": ""high""}",true
+orchestrator,manual,techniques,Multi-Agent Coordination,"1. Identify task requirements. 2. Select appropriate agents. 3. Sequence or parallel execution. 4. Aggregate results. 5. Quality check.","{""complexity"": ""high""}",true
