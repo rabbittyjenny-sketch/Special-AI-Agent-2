@@ -269,6 +269,32 @@ End with JSON:
   "detected_type": "other",
   "confidence": 85
 }`,
+
+    orchestrator: `${basePrompt}
+
+Focus on:
+1. System architecture and workflow structure
+2. Component interactions and dependencies
+3. Process flow and coordination patterns
+4. Integration points and interfaces
+5. Overall system organization
+
+Identify:
+- Workflow efficiency opportunities
+- Integration challenges or bottlenecks
+- Coordination patterns and strategies
+- System complexity and scalability
+- Orchestration best practices
+
+Confidence: Rate your analysis confidence from 0-100.
+Detected Type: Is this a workflow diagram, architecture diagram, system overview, or process flow?
+
+End with JSON:
+{
+  "key_points": ["insight 1", "insight 2", "..."],
+  "detected_type": "other",
+  "confidence": 80
+}`,
   };
 
   let prompt = agentSpecificPrompts[agentType];
