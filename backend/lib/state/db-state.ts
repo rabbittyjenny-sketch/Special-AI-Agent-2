@@ -5,8 +5,23 @@ import { eq, and } from 'drizzle-orm';
 import { conversations, messages } from '../../drizzle/schema';
 import { getHotState } from './redis-state';
 
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql);
+// Lazy initialization to avoid build-time database connection
+let sqlInstance: ReturnType<typeof neon> | null = null;
+let dbInstance: ReturnType<typeof drizzle> | null = null;
+
+const getSql = () => {
+  if (!sqlInstance) {
+    sqlInstance = neon(process.env.DATABASE_URL!);
+  }
+  return sqlInstance;
+};
+
+const getDb = () => {
+  if (!dbInstance) {
+    dbInstance = drizzle(getSql());
+  }
+  return dbInstance;
+};
 
 // ✅ Sync hot state to DB (called by background worker)
 export async function syncStateToDatabase(conversationId: string) {
@@ -14,7 +29,7 @@ export async function syncStateToDatabase(conversationId: string) {
     if (!hotState) return;
 
     // Upsert conversation record
-    await db.insert(conversations).values({
+    await getDb().insert(conversations).values({
         id: hotState.conversationId,
         userId: hotState.userId,
         agentType: hotState.agentType as 'design' | 'analyst' | 'coder' | 'marketing',
@@ -33,7 +48,7 @@ export async function syncStateToDatabase(conversationId: string) {
     // For simplicity, we sync the whole message list if needed or track via offset
     // Here we'll just batch insert new ones
     for (const msg of hotState.messages) {
-        await db.insert(messages).values({
+        await getDb().insert(messages).values({
             conversationId: hotState.conversationId,
             role: msg.role as 'user' | 'assistant' | 'system' | 'tool',
             content: msg.content,

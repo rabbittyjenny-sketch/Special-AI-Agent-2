@@ -3,7 +3,15 @@ import { neon } from '@neondatabase/serverless';
 import Anthropic from '@anthropic-ai/sdk';
 import { AgentMemory } from '../types.js';
 
-const sql = neon(process.env.DATABASE_URL!);
+// Lazy initialization to avoid build-time database connection
+let sqlInstance: ReturnType<typeof neon> | null = null;
+const getSql = () => {
+  if (!sqlInstance) {
+    sqlInstance = neon(process.env.DATABASE_URL!);
+  }
+  return sqlInstance;
+};
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
 // ✅ Get user memory (Fixed to match schema 'user_memory')
@@ -11,11 +19,11 @@ export async function getUserMemory(
     userId: string,
     agentType: string
 ): Promise<AgentMemory> {
-    const result = await sql`
+    const result = await getSql()`
     SELECT preferences, learned_patterns, interaction_count 
     FROM user_memory
     WHERE user_id = ${userId} AND agent_type = ${agentType}
-  `;
+  ` as any[];
 
     if (result.length === 0) {
         return getDefaultMemory(userId, agentType);
@@ -88,7 +96,7 @@ Extract JSON Only:
         }
 
         // Save back to Neon (Fixed table user_memory)
-        await sql`
+        await getSql()`
       INSERT INTO user_memory (user_id, agent_type, preferences, learned_patterns, interaction_count, updated_at)
       VALUES (
         ${userId}, 

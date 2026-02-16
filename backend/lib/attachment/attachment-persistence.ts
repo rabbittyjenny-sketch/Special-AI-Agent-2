@@ -3,7 +3,14 @@ import { attachments, imageAnalyses, Attachment, ImageAnalysis } from '@/drizzle
 import { VisionAnalysisResult } from '@/lib/attachment/vision-analyzer';
 import { AgentType } from '@/lib/agent/boundaries';
 
-const sql = neon(process.env.DATABASE_URL!);
+// Lazy initialization to avoid build-time database connection
+let sqlInstance: ReturnType<typeof neon> | null = null;
+const getSql = () => {
+  if (!sqlInstance) {
+    sqlInstance = neon(process.env.DATABASE_URL!);
+  }
+  return sqlInstance;
+};
 
 /**
  * Attachment with Vision Analysis
@@ -28,7 +35,7 @@ export async function persistAttachment(
   metadata?: Record<string, any>
 ): Promise<Attachment | null> {
   try {
-    const result = await sql(
+    const result = await getSql()(
       `
       INSERT INTO attachments
       (conversation_id, user_id, message_id, filename, mime_type, size, url, storage_key, public_url, metadata, uploaded_at)
@@ -47,7 +54,7 @@ export async function persistAttachment(
         publicUrl,
         JSON.stringify(metadata || {}),
       ]
-    );
+    ) as any[];
 
     if (result.length === 0) {
       return null;
@@ -72,7 +79,7 @@ export async function saveVisionAnalysis(
 ): Promise<ImageAnalysis | null> {
   try {
     // First, update the attachment with vision analysis data
-    await sql(
+    await getSql()(
       `
       UPDATE attachments
       SET vision_analysis = $1, analyzed_at = NOW()
@@ -82,7 +89,7 @@ export async function saveVisionAnalysis(
     );
 
     // Then, create detailed analysis record
-    const result = await sql(
+    const result = await getSql()(
       `
       INSERT INTO image_analyses
       (attachment_id, agent_type, analysis, summary, detected_type, confidence, key_points, metadata, created_at)
@@ -99,7 +106,7 @@ export async function saveVisionAnalysis(
         JSON.stringify(analysis.keyPoints),
         JSON.stringify(analysis.metadata),
       ]
-    );
+    ) as any[];
 
     if (result.length === 0) {
       return null;
@@ -118,7 +125,7 @@ export async function saveVisionAnalysis(
  */
 export async function getAttachmentWithAnalysis(attachmentId: string): Promise<AttachmentWithAnalysis | null> {
   try {
-    const result = await sql(
+    const result = await getSql()(
       `
       SELECT
         a.*,
@@ -129,7 +136,7 @@ export async function getAttachmentWithAnalysis(attachmentId: string): Promise<A
       GROUP BY a.id
       `,
       [attachmentId]
-    );
+    ) as any[];
 
     if (result.length === 0) {
       return null;
@@ -162,14 +169,14 @@ export async function getAttachmentsByIds(attachmentIds: string[]): Promise<Atta
     // Create placeholders for SQL IN clause
     const placeholders = attachmentIds.map((_, i) => `$${i + 1}`).join(', ');
 
-    const result = await sql(
+    const result = await getSql()(
       `
       SELECT * FROM attachments
       WHERE id IN (${placeholders})
       ORDER BY uploaded_at ASC
       `,
       attachmentIds
-    );
+    ) as any[];
 
     return result.map(mapRowToAttachment);
   } catch (error) {
@@ -188,7 +195,7 @@ export async function getConversationAttachments(
   limit: number = 50
 ): Promise<AttachmentWithAnalysis[]> {
   try {
-    const result = await sql(
+    const result = await getSql()(
       `
       SELECT
         a.*,
@@ -201,7 +208,7 @@ export async function getConversationAttachments(
       LIMIT $2
       `,
       [conversationId, limit]
-    );
+    ) as any[];
 
     return result.map((row) => {
       const attachment = mapRowToAttachment(row);
@@ -225,7 +232,7 @@ export async function getUserAttachments(
   limit: number = 100
 ): Promise<AttachmentWithAnalysis[]> {
   try {
-    const result = await sql(
+    const result = await getSql()(
       `
       SELECT
         a.*,
@@ -238,7 +245,7 @@ export async function getUserAttachments(
       LIMIT $2
       `,
       [userId, limit]
-    );
+    ) as any[];
 
     return result.map((row) => {
       const attachment = mapRowToAttachment(row);
@@ -259,7 +266,7 @@ export async function getUserAttachments(
  */
 export async function getAttachmentByStorageKey(storageKey: string): Promise<AttachmentWithAnalysis | null> {
   try {
-    const result = await sql(
+    const result = await getSql()(
       `
       SELECT
         a.*,
@@ -270,7 +277,7 @@ export async function getAttachmentByStorageKey(storageKey: string): Promise<Att
       GROUP BY a.id
       `,
       [storageKey]
-    );
+    ) as any[];
 
     if (result.length === 0) {
       return null;
@@ -328,7 +335,7 @@ export async function updateAttachment(
 
     values.push(attachmentId);
 
-    const result = await sql(
+    const result = await getSql()(
       `
       UPDATE attachments
       SET ${fields.join(', ')}
@@ -336,7 +343,7 @@ export async function updateAttachment(
       RETURNING *
       `,
       values
-    );
+    ) as any[];
 
     if (result.length === 0) {
       return null;
@@ -355,7 +362,7 @@ export async function updateAttachment(
 export async function deleteAttachment(attachmentId: string): Promise<boolean> {
   try {
     // Soft delete - just remove sensitive data but keep the record
-    const result = await sql(
+    const result = await getSql()(
       `
       UPDATE attachments
       SET url = NULL, public_url = NULL, storage_key = NULL
@@ -363,7 +370,7 @@ export async function deleteAttachment(attachmentId: string): Promise<boolean> {
       RETURNING id
       `,
       [attachmentId]
-    );
+    ) as any[];
 
     return result.length > 0;
   } catch (error) {
@@ -379,10 +386,10 @@ export async function deleteAttachment(attachmentId: string): Promise<boolean> {
 export async function permanentlyDeleteAttachment(attachmentId: string): Promise<boolean> {
   try {
     // Delete analysis records first (cascade should handle, but explicit for safety)
-    await sql(`DELETE FROM image_analyses WHERE attachment_id = $1`, [attachmentId]);
+    await getSql()(`DELETE FROM image_analyses WHERE attachment_id = $1`, [attachmentId]);
 
     // Delete attachment
-    const result = await sql(`DELETE FROM attachments WHERE id = $1 RETURNING id`, [attachmentId]);
+    const result = await getSql()(`DELETE FROM attachments WHERE id = $1 RETURNING id`, [attachmentId]) as any[];
 
     return result.length > 0;
   } catch (error) {
@@ -401,7 +408,7 @@ export async function getConversationAttachmentStats(conversationId: string): Pr
   mimeTypes: Record<string, number>;
 }> {
   try {
-    const result = await sql(
+    const result = await getSql()(
       `
       SELECT
         COUNT(*) as total_count,
@@ -416,7 +423,7 @@ export async function getConversationAttachmentStats(conversationId: string): Pr
       ) as type_counts
       `,
       [conversationId]
-    );
+    ) as any[];
 
     if (result.length === 0) {
       return {
@@ -467,7 +474,7 @@ export async function deleteOldAttachments(
 
     query += ` RETURNING id`;
 
-    const result = await sql(query, params);
+    const result = await getSql()(query, params) as any[];
     console.log(`Cleanup: Deleted ${result.length} old attachments (older than ${olderThanDays} days)`);
     return result.length;
   } catch (error) {

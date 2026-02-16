@@ -55,11 +55,17 @@ export function useVoiceHook() {
     // Keyboard Shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (document.activeElement?.tagName === 'INPUT') return;
-            if (e.code === 'Space' && voiceEnabled && !isRecording) {
+            // Prevent activation when typing in input/textarea
+            const activeTag = document.activeElement?.tagName;
+            if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
+            // Ctrl+Space to start recording (push-to-talk)
+            if (e.ctrlKey && e.code === 'Space' && voiceEnabled && !isRecording) {
                 e.preventDefault();
                 startRecording();
             }
+
+            // Escape to clear input
             if (e.code === 'Escape' && input.trim()) {
                 e.preventDefault();
                 setInput('');
@@ -67,8 +73,11 @@ export function useVoiceHook() {
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
-            if (document.activeElement?.tagName === 'INPUT') return;
-            if (e.code === 'Space' && isRecording) {
+            const activeTag = document.activeElement?.tagName;
+            if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
+            // Release Ctrl+Space to stop recording
+            if (e.ctrlKey && e.code === 'Space' && isRecording) {
                 e.preventDefault();
                 stopRecording();
             }

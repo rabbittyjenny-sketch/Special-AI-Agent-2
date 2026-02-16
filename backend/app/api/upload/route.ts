@@ -4,6 +4,9 @@ import { validateFileBeforeUpload } from '@/lib/attachment/error-handler';
 import { Attachment } from '@/lib/types';
 import crypto from 'crypto';
 
+// Force dynamic rendering to avoid build-time database connection errors
+export const dynamic = 'force-dynamic';
+
 /**
  * Phase 2.6: File Upload Endpoint (Neon PostgreSQL)
  * - Supports multiple file uploads (up to 5)

@@ -8,7 +8,14 @@ import { neon } from '@neondatabase/serverless';
 import { HotState, ConversationContext } from './redis-state';
 import { Message } from '../types';
 
-const sql = neon(process.env.DATABASE_URL!);
+// Lazy initialization to avoid build-time database connection
+let sqlInstance: ReturnType<typeof neon> | null = null;
+const getSql = () => {
+  if (!sqlInstance) {
+    sqlInstance = neon(process.env.DATABASE_URL!);
+  }
+  return sqlInstance;
+};
 
 /**
  * Persist conversation to database
@@ -17,7 +24,7 @@ const sql = neon(process.env.DATABASE_URL!);
 export async function persistConversationToDB(state: HotState): Promise<void> {
   try {
     // 1. Upsert conversation record
-    await sql`
+    await getSql()`
       INSERT INTO conversations (id, user_id, agent_type, metadata, created_at, updated_at)
       VALUES (
         ${state.conversationId},
@@ -34,12 +41,12 @@ export async function persistConversationToDB(state: HotState): Promise<void> {
     `;
 
     // 2. Get existing message IDs to avoid duplicates
-    const existingMessages = await sql`
+    const existingMessages = await getSql()`
       SELECT content, created_at
       FROM messages
       WHERE conversation_id = ${state.conversationId}
       ORDER BY created_at ASC
-    `;
+    ` as any[];
 
     const existingSet = new Set(
       existingMessages.map((m: any) => `${m.content}_${m.created_at}`)
@@ -54,7 +61,7 @@ export async function persistConversationToDB(state: HotState): Promise<void> {
     if (newMessages.length > 0) {
       // Batch insert new messages
       for (const msg of newMessages) {
-        await sql`
+        await getSql()`
           INSERT INTO messages (conversation_id, role, content, metadata, created_at)
           VALUES (
             ${state.conversationId},
@@ -63,7 +70,7 @@ export async function persistConversationToDB(state: HotState): Promise<void> {
             ${JSON.stringify(msg.metadata || {})},
             ${msg.timestamp}
           )
-        `;
+        ` as any[];
       }
 
       console.log(`💾 Persisted ${newMessages.length} new messages to DB for conversation ${state.conversationId}`);
@@ -82,12 +89,12 @@ export async function persistConversationToDB(state: HotState): Promise<void> {
 export async function loadConversationFromDB(conversationId: string): Promise<HotState | null> {
   try {
     // 1. Load conversation metadata
-    const conversations = await sql`
+    const conversations = await getSql()`
       SELECT id, user_id, agent_type, metadata, created_at, updated_at
       FROM conversations
       WHERE id = ${conversationId}
       LIMIT 1
-    `;
+    ` as any[];
 
     if (conversations.length === 0) {
       console.log(`📭 No conversation found in DB: ${conversationId}`);
@@ -97,12 +104,12 @@ export async function loadConversationFromDB(conversationId: string): Promise<Ho
     const conv = conversations[0];
 
     // 2. Load all messages for this conversation
-    const messagesResult = await sql`
+    const messagesResult = await getSql()`
       SELECT role, content, metadata, created_at as timestamp
       FROM messages
       WHERE conversation_id = ${conversationId}
       ORDER BY created_at ASC
-    `;
+    ` as any[];
 
     const messages: Message[] = messagesResult.map((row: any) => ({
       role: row.role as 'user' | 'assistant',
@@ -153,7 +160,7 @@ export async function getRecentConversations(
   updatedAt: string;
 }>> {
   try {
-    const result = await sql`
+    const result = await getSql()`
       SELECT
         c.id,
         c.agent_type,
@@ -176,7 +183,7 @@ export async function getRecentConversations(
       WHERE c.user_id = ${userId}::uuid
       ORDER BY c.updated_at DESC
       LIMIT ${limit}
-    `;
+    ` as any[];
 
     return result.map((row: any) => ({
       id: row.id,
@@ -205,11 +212,11 @@ export async function deleteOldConversations(
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
-    const result = await sql`
+    const result = await getSql()`
       DELETE FROM conversations
       WHERE updated_at < ${cutoffDate.toISOString()}
       RETURNING id
-    `;
+    ` as any[];
 
     console.log(`🗑️  Deleted ${result.length} conversations older than ${olderThanDays} days`);
     return result.length;
@@ -230,7 +237,7 @@ export async function getConversationStats(conversationId: string): Promise<{
   agentType: string;
 }> {
   try {
-    const result = await sql`
+    const result = await getSql()`
       SELECT
         c.agent_type,
         COUNT(m.id) as message_count,
@@ -240,7 +247,7 @@ export async function getConversationStats(conversationId: string): Promise<{
       LEFT JOIN messages m ON m.conversation_id = c.id
       WHERE c.id = ${conversationId}
       GROUP BY c.id, c.agent_type, c.updated_at, c.created_at
-    `;
+    ` as any[];
 
     if (result.length === 0) {
       return {
