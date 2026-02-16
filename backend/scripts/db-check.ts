@@ -15,7 +15,7 @@ async function main() {
         const userCount = await db.select().from(schema.users);
         console.log(`Users: ${userCount.length}`);
 
-        const memoryCount = await db.select().from(schema.agentMemory);
+        const memoryCount = await db.select().from(schema.userMemory);
         console.log(`Agent Memory: ${memoryCount.length}`);
 
         const kbCount = await db.select().from(schema.knowledgeBase);
