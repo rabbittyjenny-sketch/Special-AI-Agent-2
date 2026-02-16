@@ -61,7 +61,7 @@ export function CommandCenter({
     };
 
     return (
-        <div className="flex flex-col h-full lg:pr-6 gap-6">
+        <div className="flex flex-col h-full px-4 sm:px-6 lg:pr-6 gap-4 sm:gap-6">
             {/* 1. Header (H1) */}
             <motion.header
                 className="flex justify-between items-start"
@@ -70,12 +70,23 @@ export function CommandCenter({
                 transition={{ duration: 0.5 }}
             >
                 <motion.div
+                    className="flex items-center gap-3"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1, duration: 0.5 }}
                 >
-                    <h1 className="type-h1 text-base md:text-lg text-slate-700">Command Center</h1>
-                    <p className="type-button text-[9px] text-slate-400 mt-0.5">iDEAS365 x STRATEGIC AI</p>
+                    {/* Logo */}
+                    <motion.img
+                        src="https://ik.imagekit.io/ideas365logo/ideas365-logo.png?updatedAt=1771192801056"
+                        alt="iDEAS365 Logo"
+                        className="h-8 md:h-10 w-auto object-contain"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.2 }}
+                    />
+                    <div>
+                        <h1 className="type-h1 text-base md:text-lg text-slate-700">Command Center</h1>
+                        <p className="type-button text-[9px] text-slate-400 mt-0.5">iDEAS365 x STRATEGIC AI</p>
+                    </div>
                 </motion.div>
                 <motion.div
                     className="px-3 py-2 rounded-full bg-[#EFF2F9] shadow-soft-inset flex items-center gap-2"
@@ -100,7 +111,7 @@ export function CommandCenter({
             </motion.header>
 
             {/* 2. Agent Grid (Interactive Cards) */}
-            <section className="grid grid-cols-2 gap-4 flex-1 max-h-[380px]">
+            <section className="grid grid-cols-2 gap-3 sm:gap-4 flex-1 max-h-[280px] sm:max-h-[320px] md:max-h-[380px]">
                 {agentOptions.map((opt, index) => {
                     const hexColor = getHexColor(opt.color);
                     const isActive = currentAgent === opt.value;
@@ -117,7 +128,7 @@ export function CommandCenter({
                             transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
                             whileHover={{ y: -3, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`cursor-pointer rounded-[22px] p-5 text-left relative overflow-hidden group flex flex-col justify-between h-full min-h-[130px] ${isActive
+                            className={`cursor-pointer rounded-[18px] sm:rounded-[22px] p-3 sm:p-4 md:p-5 text-left relative overflow-hidden group flex flex-col justify-between h-full min-h-[100px] sm:min-h-[120px] md:min-h-[130px] ${isActive
                                 ? 'bg-[#EFF2F9] shadow-soft-inset ring-2 ring-white/50'
                                 : 'bg-[#EFF2F9] shadow-soft'
                                 }`}
@@ -159,16 +170,16 @@ export function CommandCenter({
                             </div>
 
                             <motion.div
-                                className="mt-3 relative z-10"
+                                className="mt-2 sm:mt-3 relative z-10"
                                 animate={{
                                     x: isActive ? 2 : 0
                                 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <h3 className={`type-h2 text-sm md:text-base mb-1 transition-colors ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
+                                <h3 className={`type-h2 text-xs sm:text-sm md:text-base mb-0.5 sm:mb-1 transition-colors ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
                                     {opt.label}
                                 </h3>
-                                <p className="type-label text-[9px] md:text-[10px] opacity-60">{opt.role}</p>
+                                <p className="type-label text-[8px] sm:text-[9px] md:text-[10px] opacity-60">{opt.role}</p>
                             </motion.div>
 
                             {/* Bottom Border Indicator with Wave Animation */}
@@ -208,7 +219,7 @@ export function CommandCenter({
 
             {/* 3. Input Deck */}
             <motion.section
-                className="mt-auto bg-[#EFF2F9] rounded-[22px] shadow-soft p-5 relative z-10 border border-white/40"
+                className="mt-auto bg-[#EFF2F9] rounded-[18px] sm:rounded-[22px] shadow-soft p-3 sm:p-4 md:p-5 relative z-10 border border-white/40"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7, duration: 0.6 }}
@@ -334,11 +345,11 @@ export function CommandCenter({
                             if (!loading && (input.trim() || attachments.length > 0)) onSend();
                         }
                     }}
-                    placeholder={`Instruct ${activeAgent?.label}...`}
-                    className="w-full bg-[#EFF2F9] shadow-soft-inset rounded-inner p-4 min-h-[85px] outline-none type-body text-sm resize-none mb-4 placeholder:text-slate-300 focus:ring-2 focus:ring-slate-100 transition-all font-medium"
+                    placeholder={`Instruct ${activeAgent?.label}... (Ctrl+Space for voice)`}
+                    className="w-full bg-[#EFF2F9] shadow-soft-inset rounded-inner p-3 sm:p-4 min-h-[70px] sm:min-h-[85px] outline-none type-body text-xs sm:text-sm resize-none mb-3 sm:mb-4 placeholder:text-slate-300 focus:ring-2 focus:ring-slate-100 transition-all font-medium"
                 />
 
-                <div className="grid grid-cols-2 gap-4 h-10">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 h-9 sm:h-10">
                     <motion.button
                         onClick={isRecording ? onToggleRecording : onToggleRecording}
                         disabled={!voiceEnabled}

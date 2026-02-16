@@ -10,7 +10,14 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-const sql = neon(process.env.DATABASE_URL!);
+// Lazy initialization to avoid build-time database connection
+let sqlInstance: ReturnType<typeof neon> | null = null;
+const getSql = () => {
+  if (!sqlInstance) {
+    sqlInstance = neon(process.env.DATABASE_URL!);
+  }
+  return sqlInstance;
+};
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -118,7 +125,7 @@ export async function queryKnowledgeBase(
     query += ` ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
 
     // Execute query
-    const results = await sql(query, params);
+    const results = await getSql()(query, params) as any[];
 
     const entries: KnowledgeEntry[] = results.map((row: any) => ({
       id: row.id,
@@ -313,7 +320,7 @@ export async function getKBCategories(agent: AgentType): Promise<string[]> {
       return cached;
     }
 
-    const results = await sql(
+    const results = await getSql()(
       `
       SELECT DISTINCT category
       FROM knowledge_base
@@ -321,7 +328,7 @@ export async function getKBCategories(agent: AgentType): Promise<string[]> {
       ORDER BY category
     `,
       [agent]
-    );
+    ) as any[];
 
     const categories = results.map((r: any) => r.category).filter(Boolean);
 
@@ -357,7 +364,7 @@ export async function addKBEntry(
   entry: Omit<KnowledgeEntry, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<KnowledgeEntry> {
   try {
-    const result = await sql(
+    const result = await getSql()(
       `
       INSERT INTO knowledge_base
       (agent_type, source_type, category, key, value, metadata, is_active, synced_at)
@@ -374,7 +381,7 @@ export async function addKBEntry(
         entry.isActive !== false, // Default to true
         entry.syncedAt || new Date().toISOString(),
       ]
-    );
+    ) as any[];
 
     if (result.length === 0) {
       throw new Error('Failed to create KB entry');
@@ -424,7 +431,7 @@ export async function getKBStats(agent: AgentType): Promise<{
       return cached as any;
     }
 
-    const results = await sql(
+    const results = await getSql()(
       `
       SELECT
         COUNT(*) as total,
@@ -436,7 +443,7 @@ export async function getKBStats(agent: AgentType): Promise<{
       GROUP BY source_type
     `,
       [agent]
-    );
+    ) as any[];
 
     if (results.length === 0) {
       return {

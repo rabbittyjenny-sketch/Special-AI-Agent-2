@@ -2,6 +2,9 @@
 import { syncStateToDatabase } from '@/lib/state/db-state';
 import { redis } from '@/lib/state/redis-state';
 
+// Force dynamic rendering to avoid build-time database connection errors
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     const batchSize = 10;
     const processed = [];

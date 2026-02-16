@@ -3,6 +3,9 @@ import { NextRequest } from 'next/server';
 
 const SKILLBOSS_API_URL = 'https://api.heybossai.com/v1';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // POST /api/voice/speak
 // Receives text, returns audio via SkillBoss TTS (minimax/speech-01-turbo)
 export async function POST(req: NextRequest) {

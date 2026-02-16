@@ -1,6 +1,9 @@
 
 import { NextRequest } from 'next/server';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // POST /api/voice/transcribe
 // Receives audio blob from frontend, sends to ElevenLabs STT, returns text
 export async function POST(req: NextRequest) {

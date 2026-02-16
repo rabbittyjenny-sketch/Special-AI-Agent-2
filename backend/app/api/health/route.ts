@@ -2,6 +2,9 @@
 import { redis } from '@/lib/state/redis-state';
 import { neon } from '@neondatabase/serverless';
 
+// Force dynamic rendering to avoid build-time database connection errors
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     const status: any = {
         timestamp: new Date().toISOString(),

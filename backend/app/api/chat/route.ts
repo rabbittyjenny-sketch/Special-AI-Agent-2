@@ -1,6 +1,9 @@
 
 import { processAgentRequest } from '@/lib/agent/orchestrator';
 
+// Force dynamic rendering to avoid build-time database connection errors
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
     try {
         const { conversationId, userId, agentType, message, attachments } = await req.json();
