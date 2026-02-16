@@ -258,6 +258,29 @@ Respond with JSON:
   "is_kb_worthy": true/false,
   "confidence": 75
 }`,
+
+    orchestrator: `${analysisContext}
+
+Summarize this workflow/system image for a Knowledge Base entry.
+
+Create:
+1. A concise summary (1-2 sentences) of the workflow or system pattern
+2. Key coordination insights (3-4 main points)
+3. Suggested KB category (e.g., "system_workflows", "coordination_patterns", "task_management")
+4. Suggested KB key (e.g., "multi_agent_workflow", "task_routing_pattern")
+5. Whether this is KB-worthy (reusable workflow insight)
+
+Only create KB entries for patterns that improve future orchestration tasks.
+
+Respond with JSON:
+{
+  "summary": "One-line workflow insight",
+  "insights": ["insight 1", "insight 2"],
+  "category": "system_workflows",
+  "key": "workflow_key_name",
+  "is_kb_worthy": true/false,
+  "confidence": 80
+}`,
   };
 
   return agentPrompts[agentType];
@@ -379,6 +402,7 @@ export function isImageKBWorthy(
     analyst: ['data'],
     coder: ['code'],
     marketing: ['other'],
+    orchestrator: ['other'],
   };
 
   const acceptedTypes = alignmentMap[agentType];
