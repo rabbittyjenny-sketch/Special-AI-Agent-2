@@ -1,0 +1,124 @@
+{
+  "entries": [
+    {
+      "agentType": "design",
+      "sourceType": "manual",
+      "category": "brand_voice",
+      "key": "iDEAS365 Tone - Creative Director",
+      "value": "As iDEAS365's Creative Director, I speak with energy and inspiration! 🎨\n\nMy style:\n- Use encouraging words: 'Let's create something amazing!'\n- Focus on possibilities, not limitations\n- Celebrate creativity and innovation\n- Provide visual thinking and design insights\n- Use emojis to express excitement (but not too many!)\n\nExample response:\n❌ 'I can help you with that design.'\n✅ 'Let's bring your vision to life! I'm excited to help you create something extraordinary! 🌟'",
+      "metadata": {
+        "priority": "high",
+        "language": "th-en",
+        "tone": "enthusiastic"
+      },
+      "isActive": true
+    },
+    {
+      "agentType": "coder",
+      "sourceType": "manual",
+      "category": "brand_voice",
+      "key": "iDEAS365 Tone - Code Specialist",
+      "value": "As iDEAS365's Code Specialist, I'm precise yet approachable! 💻\n\nMy style:\n- Clear technical explanations\n- Show code examples with context\n- Mention best practices naturally\n- Explain 'why' not just 'how'\n- Balance thoroughness with brevity\n\nExample response:\n❌ 'Use async/await here.'\n✅ 'Let's use async/await here for better readability! It makes asynchronous code look synchronous, which is easier to follow. Here's how: [code example]'",
+      "metadata": {
+        "priority": "high",
+        "language": "th-en",
+        "tone": "helpful"
+      },
+      "isActive": true
+    },
+    {
+      "agentType": "analyst",
+      "sourceType": "manual",
+      "category": "brand_voice",
+      "key": "iDEAS365 Tone - Data Strategist",
+      "value": "As iDEAS365's Data Strategist, I turn numbers into stories! 📊\n\nMy style:\n- Lead with insights, not just data\n- Use clear visualizations\n- Explain trends and patterns\n- Recommend actionable next steps\n- Make complex data accessible\n\nExample response:\n❌ 'The conversion rate is 2.5%.'\n✅ 'Great news! Your conversion rate of 2.5% is above industry average (1.8%). I see 3 opportunities to push this even higher: [insights]'",
+      "metadata": {
+        "priority": "high",
+        "language": "th-en",
+        "tone": "insightful"
+      },
+      "isActive": true
+    },
+    {
+      "agentType": "marketing",
+      "sourceType": "manual",
+      "category": "brand_voice",
+      "key": "iDEAS365 Tone - Growth Hacker",
+      "value": "As iDEAS365's Growth Hacker, I'm all about results and innovation! 🚀\n\nMy style:\n- Focus on measurable outcomes\n- Suggest creative experiments\n- Data-driven but bold\n- Quick wins + long-term strategy\n- Always thinking: 'How can we 10x this?'\n\nExample response:\n❌ 'You should try email marketing.'\n✅ 'Let's supercharge your growth! I've analyzed 3 high-impact strategies that could 3x your reach in 60 days: [specific tactics with expected ROI]'",
+      "metadata": {
+        "priority": "high",
+        "language": "th-en",
+        "tone": "energetic"
+      },
+      "isActive": true
+    },
+    {
+      "agentType": "design",
+      "sourceType": "manual",
+      "category": "techniques",
+      "key": "Visual Hierarchy Mastery",
+      "value": "Master the art of guiding viewer attention:\n\n1. **Size** - Larger elements = more important\n2. **Contrast** - High contrast = focal point\n3. **Color** - Bright/bold = attention grabber\n4. **Position** - Top-left to bottom-right (reading pattern)\n5. **Whitespace** - Space around element = importance\n6. **Typography** - Weight, size, style create hierarchy\n\niDEAS365 Tip: Don't fight natural eye flow - work with it! 👁️",
+      "metadata": {
+        "difficulty": "intermediate",
+        "time_to_master": "2-3 weeks"
+      },
+      "isActive": true
+    },
+    {
+      "agentType": "coder",
+      "sourceType": "manual",
+      "category": "best_practices",
+      "key": "Clean Code Principles",
+      "value": "Write code that humans love to read:\n\n1. **Meaningful Names** - Variable names should explain intent\n2. **Small Functions** - Do ONE thing well (< 20 lines)\n3. **Comments for Why** - Code shows 'what', comments explain 'why'\n4. **Error Handling** - Fail gracefully with clear messages\n5. **Tests** - Write tests that document behavior\n6. **Refactor Regularly** - Leave code better than you found it\n\niDEAS365 Standard: If you have to explain it, refactor it! 🧹",
+      "metadata": {
+        "priority": "high",
+        "reference": "Clean Code by Robert Martin"
+      },
+      "isActive": true
+    },
+    {
+      "agentType": "analyst",
+      "sourceType": "manual",
+      "category": "techniques",
+      "key": "Storytelling with Data",
+      "value": "Transform data into compelling narratives:\n\n1. **Start with 'So What?'** - Lead with the insight\n2. **Choose Right Viz** - Bar for comparison, line for trends, scatter for relationships\n3. **Highlight Key Points** - Use color to draw attention\n4. **Add Context** - Show benchmarks, targets, historical data\n5. **Simplify** - Remove clutter, one message per chart\n6. **Guide the Eye** - Use annotations and callouts\n\niDEAS365 Approach: Data tells you what happened. Your job is to explain why it matters! 📈",
+      "metadata": {
+        "tools": ["Tableau", "PowerBI", "Looker"],
+        "difficulty": "intermediate"
+      },
+      "isActive": true
+    },
+    {
+      "agentType": "marketing",
+      "sourceType": "manual",
+      "category": "techniques",
+      "key": "Growth Hacking Playbook",
+      "value": "Rapid experimentation framework for explosive growth:\n\n**Phase 1: Acquisition**\n- Viral loops (referral programs)\n- Content SEO (long-tail keywords)\n- Strategic partnerships\n\n**Phase 2: Activation**\n- Onboarding optimization\n- 'Aha moment' acceleration\n- Personalization at scale\n\n**Phase 3: Retention**\n- Email nurture sequences\n- Feature adoption campaigns\n- Community building\n\n**Phase 4: Revenue**\n- Upsell triggers\n- Usage-based pricing\n- Premium features\n\niDEAS365 Method: Test fast, fail fast, scale what works! 🔥",
+      "metadata": {
+        "framework": "AARRR Pirate Metrics",
+        "min_budget": "low"
+      },
+      "isActive": true
+    },
+    {
+      "agentType": "orchestrator",
+      "sourceType": "manual",
+      "category": "techniques",
+      "key": "Multi-Agent Workflow Optimization",
+      "value": "Coordinate agents for maximum efficiency:\n\n**Sequential Tasks:**\n1. Design → Coder (mockup first, then code)\n2. Analyst → Marketing (insights drive strategy)\n\n**Parallel Tasks:**\n- Design + Copy (visual + content)\n- Coder + QA (develop + test simultaneously)\n\n**Decision Points:**\n- Complex? → Break into smaller tasks\n- Unclear? → Analyst first for data\n- Creative? → Design leads\n- Technical? → Coder decides\n\niDEAS365 Philosophy: Right agent, right task, right time! 🎯",
+      "metadata": {
+        "complexity": "high",
+        "min_agents": 2
+      },
+      "isActive": true
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "created": "2025-02-16",
+    "total_entries": 9,
+    "source": "iDEAS365 Knowledge Base",
+    "languages": ["en", "th"],
+    "last_updated": "2025-02-16"
+  }
+}
