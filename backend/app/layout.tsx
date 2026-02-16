@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { Sarabun } from "next/font/google"; // Import Sarabun
 import "./globals.css";
 
-// Configure Sarabun Font
-const sarabun = Sarabun({
-    weight: ['300', '400', '500', '600', '700'],
-    subsets: ['thai', 'latin'],
-    display: 'swap',
-    variable: '--font-sarabun',
-});
+// Note: Google Fonts may fail in some build environments
+// Using CSS fallback instead for reliability
 
 export const metadata: Metadata = {
     title: "Specialized AI Agents",
@@ -22,7 +16,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`${sarabun.variable} font-sans bg-[#EFF2F9] text-slate-700`}>
+            <body className="font-sans bg-[#EFF2F9] text-slate-700">
                 {children}
             </body>
         </html>
