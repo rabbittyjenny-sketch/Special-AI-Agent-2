@@ -3,7 +3,7 @@
  * Defines what each agent can and cannot do, their primary data sources, and authority level
  */
 
-export type AgentType = 'design' | 'analyst' | 'coder' | 'marketing';
+export type AgentType = 'design' | 'analyst' | 'coder' | 'marketing' | 'orchestrator';
 export type Authority = 'primary' | 'secondary' | 'reference_only';
 export type DataSourceType =
   | 'figma'
@@ -191,8 +191,8 @@ export const AGENT_BOUNDARIES: Record<AgentType, AgentBoundary> = {
 
   marketing: {
     agent: 'marketing',
-    displayName: 'Growth Hacker',
-    role: 'Marketing Lead',
+    displayName: 'Marketing & Content Planner',
+    role: 'Content & Marketing',
     description: 'Specialized in marketing strategy, copywriting, and customer engagement',
     primaryResponsibilities: [
       'Create compelling marketing copy',
@@ -237,6 +237,56 @@ export const AGENT_BOUNDARIES: Record<AgentType, AgentBoundary> = {
     },
     toolLimit: 3,
     confidenceThreshold: 75,
+  },
+
+  orchestrator: {
+    agent: 'orchestrator',
+    displayName: 'Orchestrator',
+    role: 'System Coordinator',
+    description: 'Coordinates between multiple agents, manages workflows, and ensures cohesive multi-agent collaboration',
+    primaryResponsibilities: [
+      'Coordinate multi-agent workflows',
+      'Route requests to appropriate specialists',
+      'Synthesize insights from multiple agents',
+      'Manage complex multi-step tasks',
+      'Ensure consistency across agent responses',
+      'Optimize agent collaboration',
+    ],
+    restrictions: [
+      'Cannot execute specialized tasks alone',
+      'Must delegate to specialist agents',
+      'Cannot override specialist decisions',
+      'Requires user approval for critical decisions',
+    ],
+    dataSources: [
+      {
+        type: 'user_input',
+        authority: 'primary',
+        description: 'User requirements and preferences',
+      },
+      {
+        type: 'local_kb',
+        authority: 'primary',
+        description: 'Cross-domain knowledge and workflows',
+      },
+      {
+        type: 'file_upload',
+        authority: 'secondary',
+        description: 'Multi-domain documents',
+      },
+      {
+        type: 'web_api',
+        authority: 'reference_only',
+        description: 'External integrations',
+      },
+    ],
+    visionCapabilities: {
+      canAnalyzeImages: true,
+      imageTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      maxImageSize: 5242880, // 5MB
+    },
+    toolLimit: 5,
+    confidenceThreshold: 85,
   },
 };
 
@@ -371,6 +421,20 @@ export const AGENT_KB_AUTHORITIES: Record<AgentType, KBAuthority> = {
       'seo_practices',
       'social_media_tactics',
       'customer_behavior',
+    ],
+  },
+
+  orchestrator: {
+    primary: ['local_kb', 'manual'],
+    secondary: ['file_upload', 'api'],
+    categories: [
+      'workflow_patterns',
+      'agent_coordination',
+      'multi_agent_strategies',
+      'task_decomposition',
+      'integration_patterns',
+      'system_architecture',
+      'cross_domain_knowledge',
     ],
   },
 };
