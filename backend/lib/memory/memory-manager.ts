@@ -29,6 +29,7 @@ export async function getUserMemory(
         patterns: row.learned_patterns || [],
         lessonsLearned: [], // Not in current schema, defaulting to empty
         verificationRules: [], // Not in current schema, defaulting to empty
+        interactionCount: row.interaction_count || 0,
         updatedAt: new Date().toISOString()
     } as AgentMemory;
 }
