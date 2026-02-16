@@ -31,8 +31,8 @@ export const agentOptions = [
     },
     {
         value: 'marketing',
-        label: 'Growth Hacker',
-        role: 'Marketing Lead',
+        label: 'Marketing & Content Planner',
+        role: 'Content & Marketing',
         color: 'bg-[#9FD369]',
         textColor: 'text-[#9FD369]',
         borderColor: 'border-[#9FD369]',

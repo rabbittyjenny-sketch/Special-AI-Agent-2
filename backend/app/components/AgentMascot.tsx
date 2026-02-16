@@ -33,7 +33,7 @@ export function AgentMascot({ agentId, isActive = false, isHovered = false }: Ag
         return {
           image: 'https://ik.imagekit.io/ideas365logo/1770350711413(3).png?updatedAt=1771193407768',
           color: '#9FD369',
-          name: 'Growth Hacker'
+          name: 'Marketing & Content Planner'
         };
       case 'orchestrator':
         return {
